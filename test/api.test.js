@@ -356,3 +356,13 @@ test('el dueño juega en la página Jugar y cobra a su saldo', async () => {
   r = await owner.get('/api/withdrawals?mine=1');
   assert.equal(r.data.withdrawals[0].page, 'live');
 });
+
+test('la ruta reescrita por Vercel (/api/index?__p=...) llega al mismo lugar', async () => {
+  let r = await anon.get('/api/index?__p=auth/owner-exists');
+  assert.equal(r.status, 200);
+  assert.equal(r.data.exists, true);
+  r = await owner.get('/api/index?__p=withdrawals&mine=1');
+  assert.equal(r.status, 200);
+  assert.ok(Array.isArray(r.data.withdrawals));
+  assert.equal((await anon.get('/api/index?__p=no/existe')).status, 404);
+});
