@@ -515,3 +515,19 @@
     body.wide.board-big.playing #stageCol > #myWithdrawals{ margin-top:22px !important; max-height:none; }
     body.wide.board-big.playing .banner-main{ font-size:1.9rem; }
   }
+
+  /* ---------- cuadro de puntos cobrados más compacto ---------- */
+  body .banner-cashed{ padding:10px 12px 12px; border-radius:14px; border-width:2px; }
+  body .banner-cashed .cashed-label{ font-size:clamp(.85rem, 2vw, 1.05rem); }
+  body .banner-cashed .cashed-amount{ font-size:clamp(2rem, 6vw, 3.2rem); margin-top:2px; }
+  body.wide.playing .banner-cashed .cashed-amount,
+  body.wide.board-big.playing .banner-cashed .cashed-amount{ font-size:clamp(2rem, 4.5vw, 3.2rem); }
+  body.playing .banner{ padding:12px 14px; margin-bottom:12px; }
+  body.wide.playing .banner{ padding:12px 16px; }
+  body.playing .banner-total{ margin-top:6px; font-size:.92rem; }
+  body.playing .banner-total b{ font-size:1.25rem; }
+  body.playing .banner-actions{ margin-top:8px; gap:8px; }
+  body.wide.playing .banner-actions .btn, body.playing .banner-actions .btn{ padding:8px 14px; font-size:.86rem; }
+  body.wide.playing .banner-main, body.wide.board-big.playing .banner-main{ font-size:1.35rem; margin-top:2px; }
+  body.playing .banner-over{ font-size:1.1rem; padding:6px 10px; }
+  body.playing .banner-total b{ font-size:1.25rem; }
