@@ -115,6 +115,14 @@
   // =====================================================================
   var wide = (function () { var v = store.get('minasWide2', null); return v === '1' ? true : v === '0' ? false : null; })();
   var headerHidden = store.get('minasHeaderHidden', '0') === '1';
+  /** Tablero grande (por defecto): cuadros enormes a todo el ancho. "Ajustar a pantalla": todo el tablero sin bajar. */
+  var boardBig = store.get('minasBoard', 'big') !== 'fit';
+  function applyBoard() {
+    document.body.classList.toggle('board-big', boardBig);
+    var b = $('boardBtn');
+    b.textContent = boardBig ? '📐 Ajustar a pantalla' : '🔍 Tablero grande';
+    b.title = boardBig ? 'Hacer el tablero más chico para verlo entero sin bajar' : 'Hacer los cuadros mucho más grandes';
+  }
   function isWide() { return wide === null ? window.innerWidth >= 860 : wide; }
   function fsOn() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
   function applyFs() {
@@ -137,6 +145,7 @@
     var g = $('grid'), root = document.documentElement.style;
     var b = document.body.classList;
     root.removeProperty('--chrome');
+    if (boardBig) return;
     if (!b.contains('wide') || !b.contains('playing') || window.innerWidth < 860) return;
     var top = g.getBoundingClientRect().top + window.scrollY;
     root.setProperty('--chrome', Math.round(top + 18) + 'px');
@@ -145,6 +154,11 @@
     wide = !isWide();
     store.set('minasWide2', wide ? '1' : '0');
     applyWide(); fitBoard();
+  });
+  $('boardBtn').addEventListener('click', function () {
+    boardBig = !boardBig;
+    store.set('minasBoard', boardBig ? 'big' : 'fit');
+    applyBoard(); setTimeout(fitBoard, 30);
   });
   $('fsBtn').addEventListener('click', function () {
     var el = document.documentElement;
@@ -276,7 +290,7 @@
   }
 
   async function boot() {
-    applyWide(); applyFs();
+    applyWide(); applyFs(); applyBoard();
     document.body.classList.toggle('header-hidden', headerHidden);
     $('headerToggleBtn').textContent = headerHidden ? '▸' : '▾';
     try { await refreshMe(); } catch (e) { toast(e.message, 'err'); }

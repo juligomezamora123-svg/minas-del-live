@@ -490,3 +490,28 @@
     .banner-actions .btn{ flex:1 1 140px; }
     .auth{ margin:14px auto; }
   }
+
+  /* ---------- tablero grande: ocupa todo el ancho, cuadros mucho más grandes ---------- */
+  .board-btn{ padding:5px 11px; font-size:.78rem; }
+  body.board-big .grid{ container-type:inline-size; max-width:min(100%, 1200px) !important; gap:clamp(6px, 1.1cqw, 14px); }
+  body.board-big .cell{ border-radius:clamp(8px, 1.4cqw, 16px); }
+  body.board-big .cell.hidden{ font-size:clamp(1rem, 3.4cqw, 2.6rem); }
+  body.board-big .cell.revealed .cell-emoji{ font-size:clamp(1.7rem, 5.6cqw, 4rem); }
+  body.board-big .cell.revealed .cell-points{ font-size:clamp(.8rem, 2.3cqw, 1.7rem); }
+  body.board-big .cell.revealed .cell-points.cell-points-wipe{ font-size:clamp(.7rem, 2cqw, 1.4rem); padding:2px 8px; }
+  body.board-big .cell.revealed{ gap:clamp(2px, .6cqw, 8px); }
+  @keyframes cellPopBig{
+    0%{ transform:scale(1); }
+    30%{ transform:scale(1.35) rotate(-4deg); box-shadow:0 0 0 12px rgba(255,255,255,.22), 0 20px 40px rgba(0,0,0,.5); }
+    60%{ transform:scale(1.15) rotate(3deg); }
+    100%{ transform:scale(1) rotate(0deg); }
+  }
+  body.board-big .cell.just-revealed{ animation-name:cellPopBig; animation-duration:.8s; }
+  @media (min-width:860px){
+    body.wide.board-big.playing #stageCol{ display:block; }
+    body.wide.board-big.playing #stageCol > .stage-header{ margin-bottom:12px; }
+    body.wide.board-big.playing #stageCol > #turnBanner{ margin-bottom:18px; }
+    body.wide.board-big.playing #stageCol > #grid{ margin:0 auto; }
+    body.wide.board-big.playing #stageCol > #myWithdrawals{ margin-top:22px !important; max-height:none; }
+    body.wide.board-big.playing .banner-main{ font-size:1.9rem; }
+  }
