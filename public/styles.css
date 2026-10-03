@@ -379,8 +379,7 @@
     body.wide.playing #stageCol > .stage-header{ grid-column:1 / -1; grid-row:1; margin-bottom:10px; }
     body.wide.playing #stageCol > #grid{ grid-column:1; grid-row:2 / span 3; max-width:max(280px, min(100%, calc(100vh - var(--chrome, 170px)))); margin:0 auto; }
     body.wide.playing #stageCol > #turnBanner{ grid-column:2; grid-row:2; margin-bottom:14px; }
-    body.wide.playing #stageCol > #playTally{ grid-column:2; grid-row:3; margin:0 0 14px; }
-    body.wide.playing #stageCol > #myWithdrawals{ grid-column:2; grid-row:4; margin-top:0 !important; max-height:calc(100vh - 120px); overflow:auto; }
+    body.wide.playing #stageCol > #myWithdrawals{ grid-column:2; grid-row:3; margin-top:0 !important; max-height:calc(100vh - 120px); overflow:auto; }
     body.wide.playing .banner-main{ font-size:1.7rem; }
     body.wide.playing .banner-total{ font-size:1rem; }
     body.wide.playing .banner-total b{ font-size:1.6rem; }

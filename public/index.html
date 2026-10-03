@@ -130,6 +130,8 @@
         <button id="addTierBtn" class="btn" type="button">+ Agregar premio</button>
         <div id="tierTotal" class="tier-total"><span>Total asignado</span><span><b id="tierTotalNum" class="mono">0</b>/<span id="tierTotalDenom">100</span></span></div>
         <p id="tierTotalHint" class="hint"></p>
+        <p class="tally-label" style="margin-top:14px;">Avance de tu juego en curso <small>(solo tú lo ves)</small></p>
+        <div id="adminTally" class="tally"></div>
       </section>
 
       <section id="colorsPanel" class="panel" data-tab="colores" hidden>
@@ -245,7 +247,6 @@
       </div>
       <div id="turnBanner" class="banner"></div>
       <div id="grid" class="grid"></div>
-      <div id="playTally" class="tally play-tally"></div>
       <section id="myWithdrawals" class="panel" style="margin-top:18px;" hidden>
         <h2><span id="myWithdrawalsTitle">💸 Mis retiros</span><small id="myWithdrawalsSub">Estado de tus solicitudes de pago</small></h2>
         <div id="myWithdrawalsList"></div>

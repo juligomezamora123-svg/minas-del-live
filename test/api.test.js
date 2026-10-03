@@ -151,13 +151,17 @@ test('el dueño configura premios; el jugador no ve cuántos hay ni el reparto',
   assert.equal(g.totalCells, 20);
   assert.equal(g.tiers.length, 3);
   assert.ok(g.tiers.every((t) => t.count === undefined), 'el jugador no ve las cantidades');
-  assert.equal(g.totals, undefined);
   assert.equal(g.map, undefined);
   assert.match(g.code, /^JG-[A-Z2-9]{4}-[A-Z2-9]{4}$/);
   assert.deepEqual(g.opened, []);
   r = await owner.get('/api/game?page=player');
-  assert.ok(r.data.game.tiers.every((t) => typeof t.count === 'number'), 'el dueño sí ve las cantidades');
-  assert.equal(Object.values(r.data.game.totals).reduce((a, b) => a + b, 0), 20);
+  assert.ok(r.data.game.tiers.every((t) => t.count === undefined), 'ni el dueño recibe las cantidades en las páginas de juego');
+  assert.equal(r.data.game.totals, undefined);
+  r = await owner.get('/api/admin/progress/player');
+  assert.equal(r.data.progress.tiers.reduce((a, t) => a + t.total, 0), 20, 'el avance por premio sale solo en la ruta de administrador');
+  assert.equal(r.data.progress.openedCount, 0);
+  assert.equal((await ana.get('/api/admin/progress/player')).status, 403);
+  assert.equal((await anon.get('/api/admin/progress/player')).status, 401);
 });
 
 // Juega hasta destapar una casilla de premio positivo sin bomba roja, probando varias partidas.

@@ -493,17 +493,6 @@
       '<button type="button" class="btn banner-restart" data-action="restart">🔁 Reiniciar juego</button>' + wd + '</div>';
   }
 
-  /** Avance por premio: solo el dueño lo ve (el jugador no sabe cuántos hay de cada tipo). */
-  function tallyHTML() {
-    if (!isOwner() || !game.totals) return '';
-    var done = {};
-    game.opened.forEach(function (o) { done[o.key] = (done[o.key] || 0) + 1; });
-    return game.tiers.map(function (t, i) {
-      if (!game.totals[t.key]) return '';
-      return '<span class="chip" style="' + chipStyleFor(t, i) + '">' + esc(t.emoji) + ' ' + esc(t.label) + ' <b>' + (done[t.key] || 0) + '/' + game.totals[t.key] + '</b></span>';
-    }).join('');
-  }
-
   function renderPlay() {
     applyTheme(game.settings);
     document.body.classList.toggle('no-pop', !game.settings.popAnimation);
@@ -511,8 +500,6 @@
     $('grid').style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
     $('turnBanner').innerHTML = bannerHTML();
     $('grid').innerHTML = gridHTML();
-    $('playTally').hidden = !isOwner();
-    $('playTally').innerHTML = tallyHTML();
     $('progressText').textContent = 'Destapadas ' + game.opened.length + '/' + game.totalCells + ' · Juego ' + game.code;
     var who = $('playerWho');
     who.hidden = false;
@@ -806,6 +793,7 @@
     if (!adm.draft) adm.draft = JSON.parse(JSON.stringify({ texts: site.texts, money: site.money, support: site.support }));
     if (!adm.cfgs[adm.target]) adm.cfgs[adm.target] = (await api('GET', '/api/admin/config/' + adm.target)).config;
     renderAdmin();
+    loadProgress();
     if (adm.tab === 'jugadores') loadPlayers();
     if (adm.tab === 'retiros') loadAdminWds();
     if (adm.tab === 'soporte') loadTickets();
@@ -1023,6 +1011,19 @@
     if (adm.tab === 'retiros') loadAdminWds();
     if (adm.tab === 'soporte') loadTickets();
   });
+
+  // avance por premio del juego en curso del dueño (solo se ve en Administrador)
+  async function loadProgress() {
+    var el = $('adminTally');
+    try {
+      var p = (await api('GET', '/api/admin/progress/' + adm.target)).progress;
+      if (!p) { el.innerHTML = '<span class="hint">No tienes un juego en curso en esta página.</span>'; return; }
+      el.innerHTML = p.tiers.map(function (t, i) {
+        if (!t.total) return '';
+        return '<span class="chip" style="' + chipStyleFor(t, i) + '">' + esc(t.emoji) + ' ' + esc(t.label) + ' <b>' + t.opened + '/' + t.total + '</b></span>';
+      }).join('') + '<span class="hint" style="width:100%;margin:6px 0 0;">Destapadas ' + p.openedCount + ' de ' + p.totalCells + ' · Juego ' + esc(p.code) + '</span>';
+    } catch (e) { el.innerHTML = ''; }
+  }
 
   // jugadores
   async function loadPlayers() {
