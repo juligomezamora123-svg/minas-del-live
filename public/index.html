@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Minas del Live</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body class="noauth">
+<div id="bgFx" aria-hidden="true"></div>
+<button id="headerToggleBtn" aria-label="Mostrar/ocultar barra superior" title="Ocultar barra superior">▾</button>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="live-dot" aria-hidden="true"></span>
+      <div class="brand-text">
+        <span id="brandEyebrow" class="eyebrow">TikTok Live · Sorteo de regalos</span>
+        <h1 id="brandTitle">Minas del Live</h1>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button id="wideBtn" type="button" class="btn" title="Ver la página en pantalla ancha (web completo)">🖥 Web completo</button>
+      <button id="fsBtn" type="button" class="btn" title="Pantalla completa del navegador">⛶ Pantalla completa</button>
+      <div id="userChip" class="user-chip" hidden>
+        <button id="userName" type="button" class="user-name user-name-btn" title="Mi cuenta"></button>
+        <span id="userBalance" class="user-balance"></span>
+        <button id="withdrawBtn" type="button" class="btn btn-primary">🏦 Retirar</button>
+        <button id="supportBtn" type="button" class="btn">🆘 Soporte <span id="supBtnBadge" class="badge" hidden></span></button>
+        <button id="logoutBtn" type="button" class="btn">Salir</button>
+      </div>
+      <div id="viewSwitch" class="view-switch" role="tablist" aria-label="Vista" hidden>
+        <button id="viewAdminBtn" class="view-tab" role="tab">🔒 Administrador</button>
+        <button id="viewLiveBtn" class="view-tab" role="tab">🎮 Jugar</button>
+        <button id="viewPlayerBtn" class="view-tab active" role="tab">📺 Vista del jugador</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== INGRESO ===================== -->
+  <section id="authScreen" class="auth" hidden>
+    <div class="panel auth-card">
+      <h2 id="authTitle" class="display auth-title">🔐 Ingresar</h2>
+      <div id="authTabs" class="auth-tabs">
+        <button type="button" class="admin-tab" data-auth="login">Ingresar</button>
+        <button type="button" class="admin-tab" data-auth="register">Crear cuenta</button>
+        <button type="button" class="admin-tab" id="ownerTab" data-auth="owner" hidden>🛠 Crear cuenta del dueño</button>
+      </div>
+
+      <form id="loginForm" class="auth-form" data-auth-form="login" autocomplete="on">
+        <label>Usuario o correo<input id="loginId" type="text" maxlength="80" autocomplete="username" required></label>
+        <label>Clave<span class="eye-wrap"><input id="loginPass" type="password" maxlength="100" autocomplete="current-password" required><button type="button" class="eye-btn" data-eye-for="loginPass" aria-label="Mostrar u ocultar">👁</button></span></label>
+        <button type="submit" class="btn btn-primary">Ingresar</button>
+        <button type="button" class="link-btn" data-auth="forgot">¿Olvidaste tu clave?</button>
+      </form>
+
+      <form id="forgotForm" class="auth-form" data-auth-form="forgot" autocomplete="off" hidden>
+        <p id="forgotHint" class="hint" style="margin:0;">Escribe el correo de tu cuenta y te enviamos un código de 6 dígitos.</p>
+        <label>Correo<input id="fgEmail" type="email" maxlength="80" autocomplete="email" required></label>
+        <div id="forgotStep2" hidden class="auth-form">
+          <label>Código que llegó a tu correo<input id="fgCode" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code"></label>
+          <label>Clave nueva (mínimo 8 caracteres)<span class="eye-wrap"><input id="fgPass" type="password" maxlength="100" autocomplete="new-password"><button type="button" class="eye-btn" data-eye-for="fgPass" aria-label="Mostrar u ocultar">👁</button></span></label>
+          <label>Repetir clave nueva<input id="fgPass2" type="password" maxlength="100" autocomplete="new-password"></label>
+        </div>
+        <button id="fgSubmit" type="submit" class="btn btn-primary">Enviarme el código</button>
+        <button type="button" class="link-btn" data-auth="login">← Volver a ingresar</button>
+      </form>
+
+      <form id="registerForm" class="auth-form" data-auth-form="register" autocomplete="on" hidden>
+        <label>Usuario<input id="regUser" type="text" maxlength="20" placeholder="ej: juan_23" autocomplete="username" required></label>
+        <label>Correo<input id="regEmail" type="email" maxlength="80" placeholder="ej: juan@correo.com" autocomplete="email" required></label>
+        <label>Celular (con código de país)<input id="regPhone" type="tel" maxlength="20" placeholder="+57 300 123 4567" autocomplete="tel" required></label>
+        <label>Clave (mínimo 8 caracteres)<span class="eye-wrap"><input id="regPass" type="password" maxlength="100" autocomplete="new-password" required><button type="button" class="eye-btn" data-eye-for="regPass" aria-label="Mostrar u ocultar">👁</button></span></label>
+        <label>Repetir clave<input id="regPass2" type="password" maxlength="100" autocomplete="new-password" required></label>
+        <button type="submit" class="btn btn-primary">Crear mi cuenta</button>
+      </form>
+
+      <form id="ownerForm" class="auth-form" data-auth-form="owner" autocomplete="off" hidden>
+        <p class="hint" style="margin:0;">Primera vez: crea la cuenta del dueño con la clave de configuración (<b>OWNER_SETUP_KEY</b>) que pusiste en Vercel.</p>
+        <label>Clave de configuración<input id="ownKey" type="password" maxlength="100" autocomplete="off" required></label>
+        <label>Usuario del dueño<input id="ownUser" type="text" maxlength="20" autocomplete="off" required></label>
+        <label>Correo<input id="ownEmail" type="email" maxlength="80" autocomplete="off" required></label>
+        <label>Celular<input id="ownPhone" type="tel" maxlength="20" autocomplete="off" required></label>
+        <label>Clave (mínimo 8 caracteres)<input id="ownPass" type="password" maxlength="100" autocomplete="new-password" required></label>
+        <label>Repetir clave<input id="ownPass2" type="password" maxlength="100" autocomplete="new-password" required></label>
+        <button type="submit" class="btn btn-primary">Crear cuenta del dueño</button>
+      </form>
+
+      <p id="authMsg" class="auth-msg" role="alert"></p>
+      <button type="button" id="supportBtnAuth" class="link-btn" style="margin-top:10px;">🆘 ¿Necesitas ayuda? Escríbele a soporte</button>
+    </div>
+  </section>
+
+  <div id="mainLayout" class="layout" hidden>
+    <!-- ===================== ADMINISTRADOR ===================== -->
+    <div id="setupCol">
+      <div class="setup-heading">
+        <h2 id="controlHeadingText" class="display">Panel de control</h2>
+        <p id="controlIntroText"></p>
+      </div>
+      <div id="targetSwitch" class="target-switch" role="group" aria-label="Qué página estás editando">
+        <span class="target-label">Estás editando:</span>
+        <button type="button" class="target-btn" data-target="live">🎮 Jugar (mi live)</button>
+        <button type="button" class="target-btn" data-target="player">📺 Vista del jugador</button>
+      </div>
+      <p id="targetNote" class="hint" style="margin:0 0 12px;"></p>
+      <nav id="adminTabs" class="admin-tabs" aria-label="Secciones de administración">
+        <button type="button" class="admin-tab" data-tab="premios">🏆 Premios</button>
+        <button type="button" class="admin-tab" data-tab="colores">🎨 Colores</button>
+        <button type="button" class="admin-tab" data-tab="reglas">⚙️ Funciones</button>
+        <button type="button" class="admin-tab" data-tab="textos">📝 Textos</button>
+        <button type="button" class="admin-tab" data-tab="jugadores">👥 Jugadores</button>
+        <button type="button" class="admin-tab" data-tab="retiros">💸 Retiros <span id="pendingBadge" class="badge" hidden></span></button>
+        <button type="button" class="admin-tab" data-tab="soporte">🆘 Soporte <span id="supBadge" class="badge" hidden></span></button>
+      </nav>
+
+      <section id="prizesPanel" class="panel" data-tab="premios">
+        <h2><span id="prizesHeadingText">Premios del tablero</span><small id="prizesSubText"></small></h2>
+        <div class="cells-total-row">
+          <label for="totalCellsInput">Casillas del tablero<small>Hasta 1000</small></label>
+          <input id="totalCellsInput" type="number" min="1" max="1000" value="100">
+        </div>
+        <p id="wipeNote" class="hint" hidden style="margin:0 0 10px;color:var(--coral);"></p>
+        <div id="tiersList"></div>
+        <button id="addTierBtn" class="btn" type="button">+ Agregar premio</button>
+        <div id="tierTotal" class="tier-total"><span>Total asignado</span><span><b id="tierTotalNum" class="mono">0</b>/<span id="tierTotalDenom">100</span></span></div>
+        <p id="tierTotalHint" class="hint"></p>
+      </section>
+
+      <section id="colorsPanel" class="panel" data-tab="colores" hidden>
+        <h2>🎨 Colores<small>Personaliza el tema y el color de cada premio</small></h2>
+        <div class="rule-row"><span>Color principal (dorado)</span><input type="color" data-setting="accent"></div>
+        <div class="rule-row"><span>Color de fondo</span><input type="color" data-setting="bg"></div>
+        <div id="tierColors"></div>
+      </section>
+
+      <section id="rulesPanel" class="panel" data-tab="reglas" hidden>
+        <h2>⚙️ Reglas y funciones<small>Activa, desactiva y ajusta cómo funciona esta página.</small></h2>
+        <label class="rule-row"><span>Bomba roja termina el juego<small>Apagado: se pierde lo acumulado pero el juego sigue</small></span><input type="checkbox" data-setting="wipeEndsGame"></label>
+        <label class="rule-row"><span>Mostrar suma de cajones abiertos<small>En el cuadro de arriba del tablero</small></span><input type="checkbox" data-setting="showTotal"></label>
+        <label class="rule-row"><span>Mostrar puntos en cada casilla</span><input type="checkbox" data-setting="showCellPoints"></label>
+        <label class="rule-row"><span>Animación al destapar</span><input type="checkbox" data-setting="popAnimation"></label>
+        <label class="rule-row"><span>Columnas del tablero<small>0 = automático</small></span><input type="number" min="0" max="40" data-setting="columns"></label>
+        <label class="rule-row"><span>Nombre de los puntos<small>Ej: pts, monedas, diamantes</small></span><input type="text" maxlength="12" data-setting="unit"></label>
+      </section>
+
+      <section id="playersPanel" class="panel" data-tab="jugadores" hidden>
+        <h2>👥 Jugadores<small>Cuentas registradas</small></h2>
+        <div id="playersAdminList"></div>
+      </section>
+
+      <section id="supportPanel" class="panel" data-tab="soporte" hidden>
+        <h2>🆘 Soporte<small>Los mensajes de los jugadores llegan aquí. Respóndelos y márcalos como resueltos.</small></h2>
+        <div id="ticketList"></div>
+        <details class="wd-cfg-box"><summary>⚙️ Configurar la ventana de soporte <small>horario, mensaje y correo opcional</small></summary>
+          <div id="supportConfig" style="padding:0 12px 10px;">
+            <div class="text-field-row"><label for="supHours">Horario de atención (opcional)</label><input id="supHours" type="text" maxlength="80" placeholder="Lunes a sábado, 9 am a 6 pm"></div>
+            <div class="text-field-row"><label for="supMsg">Mensaje que aparece en la ventana (opcional)</label><textarea id="supMsg" maxlength="200" placeholder="Cuéntanos qué pasó y te ayudamos."></textarea></div>
+            <div class="text-field-row"><label for="supEmail">Correo alterno (opcional)</label><input id="supEmail" type="email" maxlength="80" placeholder="soporte@tucorreo.com"></div>
+            <p class="hint">Recuerda pulsar 💾 Guardar cualquier cambio.</p>
+          </div>
+        </details>
+      </section>
+
+      <section id="withdrawalsPanel" class="panel" data-tab="retiros" hidden>
+        <h2>💸 Retiros<small>Aquí se aprueban o rechazan los retiros. De los pagados puedes descargar el comprobante.</small></h2>
+        <div id="withdrawalsList"></div>
+        <details class="wd-cfg-box"><summary>⚙️ Configurar la ventana de retiro <small>valor del punto, mínimo, medios, bancos y textos</small></summary>
+        <div id="wdConfig" class="wd-config">
+          <label class="rule-row"><span>Valor de cada punto (pesos)<small>Con 1, cada punto vale un peso</small></span><input id="pointValueInput" type="number" min="1" step="1"></label>
+          <label class="rule-row"><span>Retiro mínimo (pesos)<small>0 = sin mínimo</small></span><input id="minWithdrawInput" type="number" min="0" step="1"></label>
+          <label class="rule-row"><span>Título de la ventana</span><input id="wdTitleInput" type="text" maxlength="40" style="width:170px;"></label>
+          <div class="text-field-row"><label for="wdNoteInput">Mensaje en la ventana (opcional)</label><textarea id="wdNoteInput" maxlength="200" placeholder="Ej: Los pagos se hacen en 24 horas hábiles."></textarea></div>
+          <div class="text-field-row"><label for="wdBanksInput">Bancos sugeridos (uno por línea)</label><textarea id="wdBanksInput" maxlength="600" placeholder="Bancolombia&#10;Davivienda&#10;Banco de Bogotá"></textarea></div>
+          <p class="hint" style="margin:6px 0 4px;font-weight:700;">Datos que pide la ventana</p>
+          <label class="rule-row"><span>Retiro a cuenta bancaria</span><input type="checkbox" data-wd-method="banco"></label>
+          <label class="rule-row"><span>Bre-B</span><input type="checkbox" data-wd-method="breb"></label>
+          <label class="rule-row"><span>USDT (red TRC-20)</span><input type="checkbox" data-wd-method="usdt"></label>
+          <label class="rule-row"><span>Nequi</span><input type="checkbox" data-wd-method="nequi"></label>
+          <label class="rule-row"><span>Daviplata</span><input type="checkbox" data-wd-method="daviplata"></label>
+          <label class="rule-row"><span>Otro medio</span><input type="checkbox" data-wd-method="otro"></label>
+          <label class="rule-row"><span>Pedir documento del titular</span><input type="checkbox" id="wdAskDoc"></label>
+        </div>
+        </details>
+      </section>
+
+      <section id="textsPanel" class="panel" data-tab="textos" hidden>
+        <h2>📝 Textos del sitio<small>Cambia los títulos y textos. Son los mismos en las dos páginas.</small></h2>
+        <div class="text-field-row"><label for="textEyebrow">Etiqueta superior</label><input id="textEyebrow" type="text" maxlength="80" data-text-key="eyebrow"></div>
+        <div class="text-field-row"><label for="textTitle">Título principal</label><input id="textTitle" type="text" maxlength="60" data-text-key="title"></div>
+        <div class="text-field-row"><label for="textControlHeading">Título — Panel de control</label><input id="textControlHeading" type="text" maxlength="60" data-text-key="controlHeading"></div>
+        <div class="text-field-row"><label for="textControlIntro">Texto — Panel de control</label><textarea id="textControlIntro" maxlength="300" data-text-key="controlIntro"></textarea></div>
+        <div class="text-field-row"><label for="textPrizesHeading">Título — Premios del tablero</label><input id="textPrizesHeading" type="text" maxlength="60" data-text-key="prizesHeading"></div>
+        <div class="text-field-row"><label for="textPrizesSub">Subtítulo — Premios del tablero</label><input id="textPrizesSub" type="text" maxlength="120" data-text-key="prizesSub"></div>
+        <div class="text-field-row"><label for="textStageHeading">Título — Tablero de Jugar</label><input id="textStageHeading" type="text" maxlength="60" data-text-key="stageHeading"></div>
+        <div class="text-field-row" style="margin-bottom:0;"><label for="textPlayerHeading">Título — Tablero de la Vista del jugador</label><input id="textPlayerHeading" type="text" maxlength="60" data-text-key="playerHeading"></div>
+      </section>
+    </div>
+
+    <!-- ===================== MI CUENTA ===================== -->
+    <div id="accountCol">
+      <div class="stage-header">
+        <h2 class="display" style="margin:0;font-size:1rem;">👤 Mi cuenta</h2>
+        <button id="accountBack" type="button" class="btn">← Volver</button>
+      </div>
+      <section class="panel">
+        <h2>Mis datos<small>Puedes cambiarlos cuando quieras</small></h2>
+        <form id="profileForm" class="auth-form" autocomplete="off">
+          <label>Usuario<input id="pfUser" type="text" readonly title="El usuario no se puede cambiar"><small style="font-weight:500;color:var(--text-muted);">El usuario no se puede cambiar.</small></label>
+          <label>Correo<input id="pfEmail" type="email" maxlength="80"></label>
+          <label id="pfPassWrap" hidden>Clave actual (para confirmar el cambio de correo)<input id="pfCurrent" type="password" maxlength="100" autocomplete="current-password"></label>
+          <label>Nombre completo (opcional)<input id="pfName" type="text" maxlength="60"></label>
+          <label>Celular<input id="pfPhone" type="tel" maxlength="20" required></label>
+          <button type="submit" class="btn btn-primary">Guardar datos</button>
+          <p id="pfMsg" class="auth-msg" role="alert" style="margin:0;"></p>
+        </form>
+      </section>
+      <section class="panel">
+        <h2>Cambiar clave<small>Necesitas tu clave actual</small></h2>
+        <form id="passForm" class="auth-form" autocomplete="off">
+          <label>Clave actual<input id="pwCur" type="password" maxlength="100" autocomplete="current-password" required></label>
+          <label>Clave nueva (mínimo 8 caracteres)<input id="pwNew" type="password" maxlength="100" autocomplete="new-password" required></label>
+          <label>Repetir clave nueva<input id="pwNew2" type="password" maxlength="100" autocomplete="new-password" required></label>
+          <button type="submit" class="btn btn-primary">Cambiar clave</button>
+          <p id="pwMsg" class="auth-msg" role="alert" style="margin:0;"></p>
+        </form>
+      </section>
+      <section class="panel">
+        <h2>Historial de juegos<small id="historySub">Cada juego tiene un código único</small></h2>
+        <div id="historyList"></div>
+      </section>
+    </div>
+
+    <!-- ===================== TABLERO ===================== -->
+    <div id="stageCol">
+      <div class="stage-header">
+        <h2 id="stageHeadingText" class="display" style="margin:0;font-size:1rem;">Tablero en vivo</h2>
+        <span id="playerWho" class="player-who" hidden></span>
+        <span id="progressText" class="progress-text"></span>
+      </div>
+      <div id="turnBanner" class="banner"></div>
+      <div id="grid" class="grid"></div>
+      <div id="playTally" class="tally play-tally"></div>
+      <section id="myWithdrawals" class="panel" style="margin-top:18px;" hidden>
+        <h2><span id="myWithdrawalsTitle">💸 Mis retiros</span><small id="myWithdrawalsSub">Estado de tus solicitudes de pago</small></h2>
+        <div id="myWithdrawalsList"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div id="saveBar" class="save-bar" hidden>
+  <span id="saveStatus" class="save-status"></span>
+  <button id="saveBtn" type="button" class="btn btn-primary">💾 Guardar cualquier cambio</button>
+</div>
+
+<!-- ===================== VENTANAS ===================== -->
+<div id="withdrawModal" class="confirm-overlay" hidden>
+  <form id="withdrawForm" class="confirm-box wd-box" autocomplete="off">
+    <h3 id="wdTitle" class="display" style="margin:0;">🏦 Retirar a cuenta bancaria o cripto</h3>
+    <p id="wdNote" class="hint" style="margin:0;" hidden></p>
+    <p id="wdBalanceInfo" class="wd-info"></p>
+    <div class="wd-grid">
+      <label class="wd-field wd-wide">Monto (pesos)
+        <span class="wd-row"><input id="wdAmount" type="number" min="1" step="1" required><button type="button" id="wdAll" class="btn">Todo</button></span>
+        <span id="wdRemain" class="wd-remain"></span>
+      </label>
+      <label class="wd-field wd-wide" id="wdMethodWrap">Medio de pago
+        <select id="wdMethod"></select>
+      </label>
+      <label class="wd-field" data-methods="banco">Banco<input id="wdBank" type="text" maxlength="40" list="wdBanks" placeholder="Banco"></label>
+      <label class="wd-field" data-methods="banco">Tipo de cuenta
+        <select id="wdAcctType"><option value="Ahorros">Ahorros</option><option value="Corriente">Corriente</option></select>
+      </label>
+      <label class="wd-field" data-methods="banco nequi daviplata"><span id="wdNumberLabel">Número de cuenta</span><input id="wdNumber" type="password" autocomplete="new-password" maxlength="30" inputmode="numeric" placeholder="0000000000"></label>
+      <label class="wd-field" data-methods="breb">Tipo de llave
+        <select id="wdKeyType"><option value="Celular">Celular</option><option value="Correo">Correo</option><option value="Documento">Documento</option><option value="Alfanumérica">Alfanumérica</option></select>
+      </label>
+      <label class="wd-field" data-methods="breb">Llave Bre-B<input id="wdKey" type="password" autocomplete="new-password" maxlength="40" placeholder="Tu llave"></label>
+      <label class="wd-field wd-wide" data-methods="usdt">Dirección de billetera USDT (red TRC-20)<input id="wdWallet" type="password" autocomplete="new-password" maxlength="40" placeholder="T..." spellcheck="false"></label>
+      <p class="hint wd-wide" data-methods="usdt" style="margin:0;color:var(--coral);">Solo red TRC-20 (Tron). Si envías por otra red, los fondos se pierden. Revisa bien la dirección.</p>
+      <label class="wd-field" data-methods="banco breb nequi daviplata otro">Titular<input id="wdHolder" type="text" maxlength="60" placeholder="Nombre y apellido"></label>
+      <label class="wd-field wd-doc" data-methods="banco">Documento del titular<input id="wdDoc" type="password" autocomplete="new-password" maxlength="20" inputmode="numeric" placeholder="00000000"></label>
+      <label class="wd-field wd-wide" data-methods="otro">Datos para pagarte<textarea id="wdOther" maxlength="200" rows="2"></textarea></label>
+    </div>
+    <datalist id="wdBanks"></datalist>
+    <p id="wdMsg" class="auth-msg" role="alert" style="margin:0;"></p>
+    <div class="confirm-actions">
+      <button type="button" id="wdCancel" class="btn">Cancelar</button>
+      <button type="submit" id="wdSubmit" class="btn btn-primary">Solicitar retiro</button>
+    </div>
+  </form>
+</div>
+
+<div id="supportModal" class="confirm-overlay" hidden>
+  <div class="confirm-box sup-box">
+    <h3 class="display" style="margin:0 0 6px;">🆘 Soporte</h3>
+    <p id="supIntro" class="hint" style="margin:0 0 4px;"></p>
+    <p id="supHoursTxt" class="hint" style="margin:0 0 10px;"></p>
+    <div id="supBody"></div>
+    <div class="confirm-actions" style="margin-top:12px;"><button type="button" id="supClose" class="btn">Cerrar</button></div>
+  </div>
+</div>
+
+<div id="confirmModal" class="confirm-overlay" hidden>
+  <div class="confirm-box">
+    <p id="confirmMessage"></p>
+    <div class="confirm-actions">
+      <button id="confirmCancelBtn" class="btn" type="button">Cancelar</button>
+      <button id="confirmOkBtn" class="btn btn-danger" type="button">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script src="/app.js" defer></script>
+</body>
+</html>
