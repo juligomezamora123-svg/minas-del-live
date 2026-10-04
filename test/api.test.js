@@ -226,6 +226,7 @@ test('la bomba roja termina el juego y no da saldo', async () => {
 });
 
 test('reiniciar guarda el juego anterior en el historial con su código', async () => {
+  await owner.put('/api/admin/config/player', { config: { totalCells: 20, tiers: [{ key: 'a', emoji: '⭐', label: 'A', count: 20, points: 100, wipeout: false }], settings: {} } }); // tablero sin bombas: la prueba no depende del azar
   let r = await luis.get('/api/game?page=player');
   const first = r.data.game;
   if (first.status === 'active' && first.opened.length === 0) await luis.post('/api/game/reveal', { id: first.id, idx: 0 });
@@ -469,6 +470,7 @@ test('billeteras: una configuración vieja recibe Nequi, Daviplata y la lista de
 });
 
 test('pago de entrada: sin pagar no se juega; el dueño aprueba y cada pago da una partida', async () => {
+  await owner.put('/api/admin/config/player', { config: { totalCells: 20, tiers: [{ key: 'a', emoji: '⭐', label: 'A', count: 20, points: 100, wipeout: false }], settings: {} } }); // tablero sin bombas: la prueba no depende del azar
   const money = (await owner.get('/api/admin/site')).data;
   let r = await owner.put('/api/admin/site', { entry: { enabled: true, price: 5000, lines: ['Nequi 3001112233 · Julian Gomez', 'Bre-B llave: dueno@x.com'], note: 'Paga y avisa aquí' } });
   assert.equal(r.data.entry.enabled, true);
