@@ -183,7 +183,8 @@
 
   (function initBgFx() {
     var el = $('bgFx'), symbols = ['🪙', '🪙', '✨', '♦️', '🪙', '✨', '♣️'];
-    for (var i = 0; i < 16; i++) {
+    var nSparks = (navigator.hardwareConcurrency || 4) <= 4 ? 6 : 10;
+    for (var i = 0; i < nSparks; i++) {
       var s = document.createElement('span');
       s.className = 'spark';
       s.textContent = symbols[Math.floor(Math.random() * symbols.length)];

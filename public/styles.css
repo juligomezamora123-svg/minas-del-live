@@ -42,7 +42,7 @@
   #bgFx .spark{
     position:absolute; bottom:-10vh; will-change:transform,opacity; opacity:0;
     animation-name:floatUp; animation-timing-function:linear; animation-iteration-count:infinite;
-    filter:drop-shadow(0 0 6px rgba(255,201,60,.55));
+    text-shadow:0 0 6px rgba(255,201,60,.55);
   }
   @keyframes floatUp{
     0%{ transform:translateY(0) rotate(0deg); opacity:0; }
@@ -215,7 +215,7 @@
   .banner-cashed .cashed-label{ display:block; font-family:'Bricolage Grotesque',sans-serif; font-size:clamp(1.1rem,3.2vw,1.7rem); font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
   .banner-cashed .cashed-amount{ display:block; margin-top:4px; font-family:'Bricolage Grotesque',sans-serif; font-weight:800; line-height:1; font-size:clamp(3.2rem,14vw,7.5rem); text-shadow:0 4px 0 rgba(255,255,255,.55), 0 8px 18px rgba(0,0,0,.35); overflow-wrap:anywhere; }
   .banner-cashed .cashed-amount small{ font-size:.35em; font-weight:700; margin-left:.15em; }
-  @keyframes cashGlow{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.015); box-shadow:0 0 0 6px rgba(27,227,154,.45), 0 0 80px rgba(27,227,154,.85); } }
+  @keyframes cashGlow{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.015); } }
   @media (prefers-reduced-motion: reduce){ .banner-cashed{ animation:none; } }
   .banner-points{ color:var(--gold); font-family:'JetBrains Mono',monospace; font-size:1.05rem; font-weight:600; }
 
@@ -626,9 +626,7 @@
   #stageCol > .stage-header .stage-status{
     font-size:.98rem; padding:4px 14px; border-radius:999px; min-height:0; white-space:nowrap;
     background:linear-gradient(180deg, var(--gold), #e8a91f); color:#221701; box-shadow:0 0 16px rgba(255,201,60,.45);
-    animation:statusGlow 2.2s ease-in-out infinite;
   }
-  @keyframes statusGlow{ 50%{ box-shadow:0 0 26px rgba(255,201,60,.8); } }
   #stageCol > .stage-header .board-btn{ padding:5px 12px; font-size:.8rem; }
   #stageCol > .stage-header .progress-text{ display:flex; align-items:center; gap:8px; }
   .pg-pill{ font-size:.82rem; padding:3px 11px; border-radius:999px; background:rgba(0,0,0,.4); border:1px solid var(--border); color:var(--text); white-space:nowrap; }
@@ -637,4 +635,24 @@
   @media (max-width:700px){
     #stageCol > .stage-header{ justify-content:center; padding:6px 10px; }
     #stageCol > .stage-header .sh-left{ justify-content:center; }
+  }
+
+  /* ---------- columna derecha más angosta: el tablero (y sus cuadros) gana espacio ---------- */
+  @media (min-width:860px){
+    body.wide.playing:not(.board-big) #stageCol{ grid-template-columns:minmax(0,1fr) minmax(220px,272px); column-gap:14px; }
+    body.wide.playing:not(.board-big) #stageCol > #turnBanner{ padding:8px 10px; gap:4px 10px; margin-bottom:8px; }
+    body.wide.playing:not(.board-big) .banner-main{ font-size:.95rem; }
+    body.wide.playing:not(.board-big) .banner-total{ font-size:.78rem; }
+    body.wide.playing:not(.board-big) .banner-total b{ font-size:1.05rem; }
+    body.wide.playing:not(.board-big) .banner-actions{ gap:6px; width:100%; justify-content:center; }
+    body.wide.playing:not(.board-big) .banner-actions .btn{ padding:5px 9px; font-size:.76rem; }
+    body.wide.playing:not(.board-big) .banner-over{ font-size:.85rem; }
+    body.wide.playing:not(.board-big) .banner-cashed .cashed-amount{ font-size:clamp(1.3rem,2.2vw,1.9rem); }
+    body.wide.playing:not(.board-big) #stageCol > #myWithdrawals{ padding:8px 10px; max-height:calc(100vh - 200px); font-size:.8rem; }
+    body.wide.playing:not(.board-big) #myWithdrawals h2{ font-size:.82rem; margin-bottom:6px; }
+    body.wide.playing:not(.board-big) #myWithdrawals h2 small{ font-size:.66rem; }
+    body.wide.playing:not(.board-big) #myWithdrawals .req > summary{ padding:5px 8px; gap:4px 6px; }
+    body.wide.playing:not(.board-big) #myWithdrawals .req-amount{ font-size:.85rem; }
+    body.wide.playing:not(.board-big) #myWithdrawals .req-line{ font-size:.64rem; flex-basis:100%; order:5; }
+    body.wide.playing:not(.board-big) #myWithdrawals .status{ font-size:.62rem; padding:2px 7px; }
   }
