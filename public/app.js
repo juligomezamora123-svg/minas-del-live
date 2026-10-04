@@ -516,7 +516,7 @@
     $('turnBanner').innerHTML = bannerHTML();
     $('grid').innerHTML = gridHTML();
     $('stageStatus').textContent = game.status !== 'active' ? '' : (game.opened.length >= game.totalCells ? '🎉 ¡Destapaste todo!' : '✨ Destapando premios...');
-    $('progressText').textContent = 'Destapadas ' + game.opened.length + '/' + game.totalCells + ' · Juego ' + game.code;
+    $('progressText').innerHTML = '<span class="pg-pill pg-count">🧩 <b>' + game.opened.length + '</b>/' + game.totalCells + '</span><span class="pg-pill pg-code">' + esc(game.code) + '</span>';
     var who = $('playerWho');
     who.hidden = false;
     who.textContent = isOwner() ? '👤 ' + me.username + ' · ' + (view === 'live' ? 'tu live' : 'vista previa del dueño') : '👤 ' + me.username + ' · ' + me.email;

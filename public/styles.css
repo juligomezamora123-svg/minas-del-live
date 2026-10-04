@@ -607,3 +607,34 @@
   .cash-actions{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:20px; }
   .cash-actions .btn{ padding:12px 22px; font-size:1rem; }
   @media (prefers-reduced-motion: reduce){ .cash-card{ animation:none; } }
+
+  /* ---------- encabezado del tablero: una sola franja, junta y vistosa ---------- */
+  #stageCol > .stage-header{
+    display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 14px;
+    padding:7px 14px; margin-bottom:8px;
+    background:linear-gradient(90deg, rgba(255,201,60,.14), rgba(255,255,255,.03) 50%, rgba(255,201,60,.14));
+    border:1px solid var(--gold); border-radius:14px;
+    box-shadow:0 0 18px rgba(255,201,60,.14), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  #stageCol > .stage-header .sh-left{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-width:0; }
+  body #stageCol > .stage-header h2.display{ font-size:1.05rem !important; line-height:1.1; color:var(--gold); text-shadow:0 0 14px rgba(255,201,60,.45); }
+  #stageCol > .stage-header .player-who{
+    flex:0 0 auto; order:0; font-size:.74rem; padding:3px 10px; border-radius:999px;
+    background:rgba(0,0,0,.35); border:1px solid rgba(45,212,191,.45); white-space:nowrap;
+  }
+  #stageCol > .stage-header .board-ctl{ flex-direction:row; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; }
+  #stageCol > .stage-header .stage-status{
+    font-size:.98rem; padding:4px 14px; border-radius:999px; min-height:0; white-space:nowrap;
+    background:linear-gradient(180deg, var(--gold), #e8a91f); color:#221701; box-shadow:0 0 16px rgba(255,201,60,.45);
+    animation:statusGlow 2.2s ease-in-out infinite;
+  }
+  @keyframes statusGlow{ 50%{ box-shadow:0 0 26px rgba(255,201,60,.8); } }
+  #stageCol > .stage-header .board-btn{ padding:5px 12px; font-size:.8rem; }
+  #stageCol > .stage-header .progress-text{ display:flex; align-items:center; gap:8px; }
+  .pg-pill{ font-size:.82rem; padding:3px 11px; border-radius:999px; background:rgba(0,0,0,.4); border:1px solid var(--border); color:var(--text); white-space:nowrap; }
+  .pg-pill b{ color:var(--gold); font-size:.98rem; }
+  .pg-code{ color:var(--text-muted); font-size:.72rem; }
+  @media (max-width:700px){
+    #stageCol > .stage-header{ justify-content:center; padding:6px 10px; }
+    #stageCol > .stage-header .sh-left{ justify-content:center; }
+  }
