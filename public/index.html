@@ -117,6 +117,7 @@
         <button type="button" class="admin-tab" data-tab="textos">📝 Textos</button>
         <button type="button" class="admin-tab" data-tab="jugadores">👥 Jugadores</button>
         <button type="button" class="admin-tab" data-tab="retiros">💸 Retiros <span id="pendingBadge" class="badge" hidden></span></button>
+        <button type="button" class="admin-tab" data-tab="entradas">🎟 Entradas <span id="entryBadge" class="badge" hidden></span></button>
         <button type="button" class="admin-tab" data-tab="soporte">🆘 Soporte <span id="supBadge" class="badge" hidden></span></button>
       </nav>
 
@@ -155,6 +156,18 @@
       <section id="playersPanel" class="panel" data-tab="jugadores" hidden>
         <h2>👥 Jugadores<small>Cuentas registradas</small></h2>
         <div id="playersAdminList"></div>
+      </section>
+
+      <section id="entryPanel" class="panel" data-tab="entradas" hidden>
+        <h2>🎟 Entrada para jugar<small>Si la activas, el jugador paga por fuera, te avisa con la referencia y tú apruebas. Cada pago aprobado le da una partida.</small></h2>
+        <div id="entryConfig">
+          <label class="rule-row"><span>Cobrar entrada para jugar<small>Apagado: todos juegan gratis. Tú juegas siempre gratis.</small></span><input type="checkbox" id="entryEnabled"></label>
+          <label class="rule-row"><span>Precio por partida (pesos)</span><input id="entryPriceInput" type="number" min="1" step="1"></label>
+          <div class="text-field-row"><label for="entryLines">Datos para que te paguen (uno por línea)</label><textarea id="entryLines" maxlength="900" placeholder="Nequi 300 123 4567 · Tu nombre&#10;Bre-B llave: tucorreo@mail.com&#10;USDT TRC-20: T..."></textarea></div>
+          <div class="text-field-row"><label for="entryNoteInput">Mensaje para el jugador (opcional)</label><textarea id="entryNoteInput" maxlength="200" placeholder="Ej: Escribe la referencia que te da tu banco o app."></textarea></div>
+          <p class="hint">Recuerda pulsar 💾 Guardar cualquier cambio.</p>
+        </div>
+        <div id="entryList"></div>
       </section>
 
       <section id="supportPanel" class="panel" data-tab="soporte" hidden>
@@ -338,6 +351,23 @@
     <div id="tmpPassValue" class="code-value"></div>
     <p class="hint" style="margin:10px 0 0;">Envíasela al jugador por WhatsApp o donde lo contactes. Con esta clave entra y la cambia en <b>Mi cuenta</b>. Esta clave solo se muestra ahora.</p>
     <div class="confirm-actions" style="margin-top:12px;justify-content:center;"><button type="button" id="tmpPassCopy" class="btn btn-primary">📋 Copiar</button><button type="button" id="tmpPassClose" class="btn">Cerrar</button></div>
+  </div>
+</div>
+
+<div id="entryModal" class="confirm-overlay" hidden>
+  <div class="confirm-box wd-box" style="max-width:430px;">
+    <h3 class="display" style="margin:0;">🎟 Entrada para jugar</h3>
+    <div id="entryPriceBig" class="entry-price"></div>
+    <p id="entryNoteTxt" class="hint" style="margin:0;" hidden></p>
+    <div id="entryInfo" class="entry-info"></div>
+    <form id="entryForm" class="auth-form" autocomplete="off">
+      <label>Número de referencia o comprobante del pago<input id="entryRef" type="text" maxlength="60" placeholder="Ej: M1234567" required></label>
+      <label>Nombre de quien pagó (opcional)<input id="entryPayer" type="text" maxlength="60"></label>
+      <p id="entryMsg" class="auth-msg" role="alert" style="margin:0;"></p>
+      <button id="entrySubmit" type="submit" class="btn btn-primary">✅ Ya pagué, avisar</button>
+    </form>
+    <div id="entryMine"></div>
+    <div class="confirm-actions"><button type="button" id="entryClose" class="btn">Cerrar</button></div>
   </div>
 </div>
 

@@ -467,3 +467,65 @@ test('billeteras: una configuración vieja recibe Nequi, Daviplata y la lista de
   assert.equal(m.methods.daviplata, false);
   if (prev) await query(`UPDATE site SET value = $1 WHERE key = 'money'`, [prev]);
 });
+
+test('pago de entrada: sin pagar no se juega; el dueño aprueba y cada pago da una partida', async () => {
+  const money = (await owner.get('/api/admin/site')).data;
+  let r = await owner.put('/api/admin/site', { entry: { enabled: true, price: 5000, lines: ['Nequi 3001112233 · Julian Gomez', 'Bre-B llave: dueno@x.com'], note: 'Paga y avisa aquí' } });
+  assert.equal(r.data.entry.enabled, true);
+  assert.equal(r.data.entry.price, 5000);
+  assert.equal(r.data.entry.lines.length, 2);
+  assert.equal((await anon.get('/api/me')).data.site.entry.price, 5000, 'todos ven el precio y los datos de pago');
+
+  const pepe = new Client();
+  assert.equal((await pepe.post('/api/auth/register', { username: 'pepe_1', email: 'pepe@x.com', phone: '3009998877', password: 'clavePepe123' })).status, 200);
+  r = await pepe.get('/api/game?page=player');
+  const g1 = r.data.game;
+  assert.equal(g1.paid, false);
+  assert.equal((await pepe.post('/api/game/reveal', { id: g1.id, idx: 0 })).status, 402, 'sin pagar no destapa');
+
+  assert.equal((await pepe.post('/api/entry/payments', { reference: 'ab' })).status, 400, 'referencia muy corta');
+  assert.equal((await pepe.post('/api/entry/payments', { reference: 'REF-1001', payer: 'Pepe' })).status, 200);
+  assert.equal((await owner.post('/api/entry/payments', { reference: 'REF-9999' })).status, 400, 'el dueño no paga');
+  assert.equal((await anon.get('/api/entry/payments')).status, 401);
+  const dupe = new Client();
+  await dupe.post('/api/auth/login', { id: 'pepe_1', password: 'clavePepe123' });
+  assert.equal((await dupe.post('/api/entry/payments', { reference: 'ref-1001' })).status, 409, 'la misma referencia no se usa dos veces');
+  assert.equal((await pepe.post('/api/game/reveal', { id: g1.id, idx: 0 })).status, 402, 'pendiente tampoco deja jugar');
+
+  r = await owner.get('/api/me');
+  assert.equal(r.data.entryPending, 1);
+  r = await owner.get('/api/entry/payments');
+  const pay = r.data.payments.find((p) => p.reference === 'REF-1001');
+  assert.equal(pay.status, 'pending');
+  assert.equal(pay.amount, 5000);
+  assert.equal(pay.email, 'pepe@x.com');
+  assert.equal((await pepe.post(`/api/entry/payments/${pay.id}/approve`)).status, 403, 'solo el dueño aprueba');
+  assert.equal((await owner.post(`/api/entry/payments/${pay.id}/approve`)).status, 200);
+  assert.equal((await owner.post(`/api/entry/payments/${pay.id}/approve`)).status, 409, 'no se aprueba dos veces');
+  assert.equal((await pepe.get('/api/me')).data.user.credits, 1);
+
+  r = await pepe.post('/api/game/reveal', { id: g1.id, idx: 0 });
+  assert.equal(r.status, 200);
+  assert.equal(r.data.credits, 0);
+  assert.equal(r.data.game.paid, true);
+  assert.equal((await pepe.post('/api/game/reveal', { id: g1.id, idx: 1 })).status, 200, 'la misma partida sigue sin cobrar otra vez');
+  assert.equal((await pepe.get('/api/me')).data.user.credits, 0);
+
+  r = await pepe.post('/api/game/restart', { id: g1.id });
+  assert.equal(r.data.game.paid, false);
+  assert.equal((await pepe.post('/api/game/reveal', { id: r.data.game.id, idx: 0 })).status, 402, 'la partida nueva pide otra entrada');
+
+  // rechazar un pago no da partida
+  await pepe.post('/api/entry/payments', { reference: 'REF-1002' });
+  const p2 = (await owner.get('/api/entry/payments')).data.payments.find((p) => p.reference === 'REF-1002');
+  assert.equal((await owner.post(`/api/entry/payments/${p2.id}/reject`)).status, 200);
+  assert.equal((await pepe.get('/api/me')).data.user.credits, 0);
+  assert.equal((await pepe.get('/api/entry/payments')).data.payments.length, 2, 'cada jugador ve solo los suyos');
+
+  // el dueño juega siempre gratis y, apagada la entrada, todos juegan libre
+  const og = (await owner.get('/api/game?page=live')).data.game;
+  assert.equal((await owner.post('/api/game/reveal', { id: og.id, idx: 0 })).status, 200);
+  await owner.put('/api/admin/site', { entry: { enabled: false, price: 5000, lines: [] } });
+  assert.equal((await pepe.post('/api/game/reveal', { id: (await pepe.get('/api/game?page=player')).data.game.id, idx: 0 })).status, 200);
+  await owner.put('/api/admin/site', { texts: money.texts });
+});

@@ -87,7 +87,7 @@
 
   var me = null;
   var site = { texts: DEFAULT_TEXTS, money: { pointValue: 1, minWithdraw: 0, methods: { banco: true }, banks: [], askDoc: true, title: '🏦 Retirar a cuenta bancaria o cripto', note: '' }, support: { hours: '', message: '', email: '' } };
-  var unread = 0, pendingWd = 0, mailEnabled = false;
+  var unread = 0, pendingWd = 0, entryPendingN = 0, mailEnabled = false;
   var view = store.get('minasView', 'player');
   var prevView = null;
   var game = null;          // partida actual de la página que se está viendo
@@ -102,9 +102,9 @@
     cfgs: { live: null, player: null },
     dirty: { live: false, player: false, site: false },
     draft: null,   // copia editable de { texts, money, support }
-    players: [], wds: [], tickets: [],
+    players: [], wds: [], tickets: [], entries: [],
   };
-  var TABS = ['premios', 'colores', 'reglas', 'textos', 'jugadores', 'retiros', 'soporte'];
+  var TABS = ['premios', 'colores', 'reglas', 'textos', 'jugadores', 'retiros', 'entradas', 'soporte'];
   if (TABS.indexOf(adm.tab) < 0) adm.tab = 'premios';
 
   var isOwner = function () { return !!me && me.role === 'owner'; };
@@ -178,7 +178,7 @@
     headerHidden = !headerHidden;
     store.set('minasHeaderHidden', headerHidden ? '1' : '0');
     document.body.classList.toggle('header-hidden', headerHidden);
-    $('headerToggleBtn').textContent = headerHidden ? '▸' : '▾';
+    $('headerToggleBtn').textContent = headerHidden ? '▸ Mostrar barra' : '▾';
     setTimeout(fitBoard, 30);
   });
 
@@ -263,6 +263,7 @@
     unread = d.unread || 0;
     pendingWd = d.pending || 0;
     mailEnabled = !!d.mailEnabled;
+    entryPendingN = d.entryPending || 0;
   }
 
   function renderChrome() {
@@ -275,12 +276,13 @@
     $('saveBar').hidden = !(isOwner() && view === 'admin');
     if (logged) {
       $('userName').textContent = '👤 ' + me.username + (isOwner() ? ' · Dueño' : '');
-      $('userBalance').textContent = 'Saldo ' + pesos(me.balance);
+      $('userBalance').textContent = 'Saldo ' + pesos(me.balance) + (entryOn() ? ' · 🎟 ' + (me.credits || 0) : '');
       $('withdrawBtn').disabled = me.balance < 1;
       var b = $('supBtnBadge');
       b.hidden = !(unread > 0);
       b.textContent = unread;
       var pb = $('pendingBadge'); pb.hidden = !(pendingWd > 0); pb.textContent = pendingWd;
+      var eb = $('entryBadge'); eb.hidden = !(isOwner() && entryPendingN > 0); eb.textContent = entryPendingN;
       var sb = $('supBadge'); sb.hidden = !(isOwner() && unread > 0); sb.textContent = unread;
     }
     [['admin', 'viewAdminBtn'], ['live', 'viewLiveBtn'], ['player', 'viewPlayerBtn']].forEach(function (p) {
@@ -295,7 +297,7 @@
   async function boot() {
     applyWide(); applyFs(); applyBoard();
     document.body.classList.toggle('header-hidden', headerHidden);
-    $('headerToggleBtn').textContent = headerHidden ? '▸' : '▾';
+    $('headerToggleBtn').textContent = headerHidden ? '▸ Mostrar barra' : '▾';
     try { await refreshMe(); } catch (e) { toast(e.message, 'err'); }
     if (!me) {
       try { ownerExists = (await api('GET', '/api/auth/owner-exists')).exists; } catch (e) { ownerExists = true; }
@@ -496,8 +498,19 @@
     return out;
   }
 
+  // ---------- entrada para jugar ----------
+  function entryOn() { return !isOwner() && !!site.entry && site.entry.enabled; }
+  function needsPay() {
+    return entryOn() && !!game && game.status === 'active' && !game.paid && game.opened.length === 0 && (me.credits || 0) < 1;
+  }
+
   function bannerHTML() {
     var unit = esc(game.settings.unit || 'pts');
+    if (needsPay()) {
+      return '<div class="banner-main">🎟 Esta partida cuesta <b class="mono">' + pesos(site.entry.price) + '</b></div>' +
+        '<div class="banner-total">Si ya pagaste, espera a que el administrador apruebe tu pago.</div>' +
+        '<div class="banner-actions"><button type="button" class="btn btn-primary banner-pay" data-action="entry">💳 Pagar para jugar</button></div>';
+    }
     var again = '<button type="button" class="btn btn-primary banner-newgame" data-action="restart">🆕 Crear nuevo juego</button>';
     var wd = me && me.balance >= 1 ? '<button type="button" class="btn banner-cash" data-action="withdraw">🏦 Retirar a cuenta bancaria o cripto</button>' : '';
     if (game.status === 'cashed') {
@@ -540,11 +553,15 @@
   $('grid').addEventListener('click', async function (e) {
     var b = e.target.closest('.cell.demo-clickable');
     if (!b || busy || !game || game.status !== 'active') return;
+    if (needsPay()) { openEntry(); return; }
     busy = true;
     try {
       var d = await api('POST', '/api/game/reveal', { id: game.id, idx: Number(b.dataset.idx) });
-      game = d.game; renderPlay();
+      game = d.game;
+      if (d.credits !== undefined) me.credits = d.credits;
+      renderPlay();
     } catch (err) {
+      if (err.status === 402) { openEntry(); busy = false; return; }
       toast(err.message, 'err');
       if (err.status === 409) { try { game = (await api('GET', '/api/game?page=' + pageOfView())).game; renderPlay(); } catch (e2) { /* nada */ } }
     }
@@ -556,6 +573,7 @@
     if (!a || busy || !game) return;
     var act = a.dataset.action;
     if (act === 'withdraw') return openWithdraw();
+    if (act === 'entry') return openEntry();
     if (act === 'cash') {
       var gain = Math.max(0, game.points) * site.money.pointValue;
       askConfirm('¿Cobrar ' + fmt(game.points) + ' ' + (game.settings.unit || 'pts') + ' (' + pesos(gain) + ' pesos a tu saldo) ahora? El juego termina y ya no podrás destapar más casillas.', async function () {
@@ -576,6 +594,98 @@
       if (game.status === 'active' && game.opened.length > 0) askConfirm('¿Reiniciar el juego? Se pierde lo que llevas destapado y se reparten los premios de nuevo.', start); else start();
     }
   });
+
+  var ENTRY_TXT = { pending: 'En revisión', approved: 'Aprobado', rejected: 'Rechazado' };
+  var ENTRY_CLS = { pending: 'pending', approved: 'paid', rejected: 'rejected' };
+  async function loadMyEntries() {
+    var box = $('entryMine');
+    try {
+      var list = (await api('GET', '/api/entry/payments')).payments;
+      box.innerHTML = list.length
+        ? '<p class="req-title">Mis pagos</p>' + list.slice(0, 6).map(function (p) {
+          return '<div class="entry-mine-row"><span class="status ' + ENTRY_CLS[p.status] + '">' + ENTRY_TXT[p.status] + '</span><b class="mono">' + pesos(p.amount) + '</b><span class="hint" style="margin:0;">' + esc(p.reference) + ' · ' + fmtDate(p.createdAt) + '</span></div>';
+        }).join('')
+        : '';
+    } catch (e) { box.innerHTML = ''; }
+  }
+  async function openEntry() {
+    var e = site.entry;
+    $('entryPriceBig').innerHTML = pesos(e.price) + '<small>por partida</small>';
+    $('entryNoteTxt').hidden = !e.note; $('entryNoteTxt').textContent = e.note || '';
+    $('entryInfo').innerHTML = e.lines.length
+      ? '<p class="req-title" style="margin-top:0;">Paga a una de estas cuentas</p>' + e.lines.map(function (l) { return '<div class="entry-line">' + esc(l) + '</div>'; }).join('')
+      : '<p class="hint" style="margin:0;">Escríbele al administrador para saber a dónde pagar.</p>';
+    $('entryMsg').textContent = '';
+    $('entryModal').hidden = false;
+    loadMyEntries();
+  }
+  function closeEntry() { $('entryModal').hidden = true; }
+  $('entryClose').addEventListener('click', closeEntry);
+  $('entryModal').addEventListener('click', function (ev) { if (ev.target === $('entryModal')) closeEntry(); });
+  $('entryForm').addEventListener('submit', async function (ev) {
+    ev.preventDefault();
+    $('entrySubmit').disabled = true;
+    try {
+      await api('POST', '/api/entry/payments', { reference: $('entryRef').value, payer: $('entryPayer').value });
+      $('entryRef').value = ''; $('entryPayer').value = '';
+      $('entryMsg').textContent = '';
+      toast('Pago enviado. Cuando el administrador lo apruebe podrás jugar.', 'ok');
+      loadMyEntries();
+    } catch (err) { $('entryMsg').textContent = err.message; }
+    $('entrySubmit').disabled = false;
+  });
+
+  // panel del dueño: aprobar o rechazar pagos
+  async function loadEntryPayments() {
+    try { adm.entries = (await api('GET', '/api/entry/payments')).payments; } catch (e) { return toast(e.message, 'err'); }
+    var pending = adm.entries.filter(function (p) { return p.status === 'pending'; });
+    var done = adm.entries.filter(function (p) { return p.status !== 'pending'; });
+    entryPendingN = pending.length;
+    var eb = $('entryBadge'); eb.hidden = !entryPendingN; eb.textContent = entryPendingN;
+    var row = function (p) {
+      var acts = p.status === 'pending'
+        ? '<button type="button" class="req-ico ok" data-entry-ok="' + p.id + '" title="Aprobar: le da una partida">✅</button><button type="button" class="req-ico no" data-entry-no="' + p.id + '" title="Rechazar">↩</button>' : '';
+      return '<div class="entry-admin-row' + (p.status === 'pending' ? ' pending' : '') + '"><span class="status ' + ENTRY_CLS[p.status] + '">' + ENTRY_TXT[p.status] + '</span>' +
+        '<b class="mono">' + pesos(p.amount) + '</b>' +
+        '<span class="ea-info"><b>' + esc(p.username) + '</b> · ref <span class="mono">' + esc(p.reference) + '</span>' + (p.payer ? ' · pagó: ' + esc(p.payer) : '') + '<small>' + fmtDate(p.createdAt) + (p.email ? ' · ' + esc(p.email) : '') + '</small></span>' +
+        '<span class="req-acts">' + acts + '</span></div>';
+    };
+    $('entryList').innerHTML = !adm.entries.length ? '<p class="empty-note">Todavía no hay pagos de entrada.</p>' :
+      (pending.length ? '<p class="req-title">⏳ Por aprobar (' + pending.length + ')</p>' + pending.map(row).join('') : '<p class="empty-note">No hay pagos por aprobar.</p>') +
+      (done.length ? '<p class="req-title">🗂 Historial (' + done.length + ')</p>' + done.slice(0, 50).map(row).join('') : '');
+  }
+  $('entryList').addEventListener('click', function (ev) {
+    var ok = ev.target.closest('[data-entry-ok]'), no = ev.target.closest('[data-entry-no]');
+    var btn = ok || no;
+    if (!btn) return;
+    var id = ok ? ok.dataset.entryOk : no.dataset.entryNo;
+    var p = adm.entries.filter(function (x) { return x.id === id; })[0];
+    if (!p) return;
+    var run = async function (action) {
+      try { await api('POST', '/api/entry/payments/' + id + '/' + action); await loadEntryPayments(); renderChrome(); }
+      catch (err) { toast(err.message, 'err'); await loadEntryPayments(); }
+    };
+    if (ok) askConfirm('¿Aprobar el pago de ' + pesos(p.amount) + ' de ' + p.username + ' (ref ' + p.reference + ')? Solo hazlo si ya te llegó el dinero. Le damos una partida.', function () { run('approve'); });
+    else askConfirm('¿Rechazar el pago de ' + p.username + ' (ref ' + p.reference + ')? No recibirá partida.', function () { run('reject'); });
+  });
+
+  function renderEntryForm() {
+    var e = adm.draft.entry, ae = document.activeElement;
+    $('entryEnabled').checked = !!e.enabled;
+    if (ae !== $('entryPriceInput')) $('entryPriceInput').value = e.price;
+    if (ae !== $('entryLines')) $('entryLines').value = e.lines.join('\n');
+    if (ae !== $('entryNoteInput')) $('entryNoteInput').value = e.note;
+  }
+  function readEntryForm() {
+    var e = adm.draft.entry;
+    e.enabled = $('entryEnabled').checked;
+    e.price = Math.max(1, Math.floor(Number($('entryPriceInput').value)) || 1);
+    e.lines = $('entryLines').value.split('\n').map(function (l) { return l.trim().slice(0, 120); }).filter(Boolean).slice(0, 8);
+    e.note = $('entryNoteInput').value.slice(0, 200);
+    markDirty('site');
+  }
+  $('entryConfig').addEventListener('input', readEntryForm);
+  $('entryConfig').addEventListener('change', readEntryForm);
 
   // letrero grande superpuesto al cobrar
   function showCashOverlay() {
@@ -933,12 +1043,13 @@
   }
 
   async function enterAdmin() {
-    if (!adm.draft) adm.draft = JSON.parse(JSON.stringify({ texts: site.texts, money: site.money, support: site.support }));
+    if (!adm.draft) adm.draft = JSON.parse(JSON.stringify({ texts: site.texts, money: site.money, support: site.support, entry: site.entry }));
     if (!adm.cfgs[adm.target]) adm.cfgs[adm.target] = (await api('GET', '/api/admin/config/' + adm.target)).config;
     renderAdmin();
     loadProgress();
     if (adm.tab === 'jugadores') loadPlayers();
     if (adm.tab === 'retiros') loadAdminWds();
+    if (adm.tab === 'entradas') loadEntryPayments();
     if (adm.tab === 'soporte') loadTickets();
   }
 
@@ -976,7 +1087,7 @@
     $('targetNote').textContent = adm.target === 'live'
       ? 'Aquí editas la página 🎮 Jugar (tu live): sus premios, casillas, reglas y colores. No afecta la Vista del jugador.'
       : 'Aquí editas la 📺 Vista del jugador (la página para otras personas): sus premios, casillas, reglas y colores. No afecta tu página Jugar.';
-    var pageTab = ['jugadores', 'retiros', 'soporte', 'textos'].indexOf(adm.tab) < 0;
+    var pageTab = ['jugadores', 'retiros', 'entradas', 'soporte', 'textos'].indexOf(adm.tab) < 0;
     $('targetSwitch').hidden = !pageTab;
     $('targetNote').hidden = !pageTab;
     $('totalCellsInput').value = c.totalCells;
@@ -985,7 +1096,7 @@
     $('wipeNote').textContent = wipeNames.length ? '💥 Actúan como bomba roja (pierden todo al destaparse): ' + wipeNames.join(', ') + '. Si no lo quieres, apaga su botón 💥.' : '';
     if (!isTyping($('tiersList'))) $('tiersList').innerHTML = tiersHTML();
     refreshTierTotal();
-    renderRules(); renderColors(); renderTextsForm(); renderMoneyForm(); renderSupportForm();
+    renderRules(); renderColors(); renderTextsForm(); renderMoneyForm(); renderSupportForm(); renderEntryForm();
     renderChrome();
     renderSaveBar();
   }
@@ -1155,6 +1266,7 @@
     renderAdmin();
     if (adm.tab === 'jugadores') loadPlayers();
     if (adm.tab === 'retiros') loadAdminWds();
+    if (adm.tab === 'entradas') loadEntryPayments();
     if (adm.tab === 'soporte') loadTickets();
   });
 
@@ -1442,11 +1554,18 @@
   setInterval(async function () {
     if (!me || document.hidden) return;
     try {
+      var credBefore = me.credits || 0;
       await refreshMe();
       if (!me) return renderChrome();
+      if (!isOwner() && (me.credits || 0) > credBefore) {
+        toast('✅ ¡Tu pago fue aprobado! Ya puedes jugar.', 'ok');
+        closeEntry();
+        if (playing() && game) renderPlay();
+      }
       renderChrome();
       if (view === 'admin' && isOwner()) {
         if (adm.tab === 'retiros' && !isTyping($('withdrawalsList'))) loadAdminWds();
+        if (adm.tab === 'entradas') loadEntryPayments();
         if (adm.tab === 'soporte' && !isTyping($('ticketList'))) loadTickets();
       }
     } catch (e) {

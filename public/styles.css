@@ -668,3 +668,36 @@
   .acct-label{ flex:1 1 auto; min-width:0; word-break:break-word; }
   .acct-label small{ color:var(--text-muted); }
   #wdBalanceInfo[hidden]{ display:none; }
+
+  /* botón para ocultar/mostrar la barra superior: bien visible (dorado sólido) */
+  #headerToggleBtn{
+    top:10px; right:10px; width:42px; height:42px; font-size:1.35rem; font-weight:900;
+    background:linear-gradient(180deg,#FFE27A,#FFC93C 55%,#E8A91F); color:#2A1B00;
+    border:2px solid #FFF6E6; opacity:1;
+    box-shadow:0 0 0 3px rgba(255,201,60,.35), 0 0 18px rgba(255,201,60,.8), 0 4px 10px rgba(0,0,0,.5);
+  }
+  #headerToggleBtn:hover{ transform:scale(1.08); filter:brightness(1.08); }
+  body.header-hidden #headerToggleBtn{ animation:togglePulse 1.8s ease-in-out infinite; }
+  @keyframes togglePulse{ 50%{ transform:scale(1.1); } }
+  @media (prefers-reduced-motion: reduce){ body.header-hidden #headerToggleBtn{ animation:none; } }
+
+  /* cuando la barra está oculta: botón grande con texto, dorado sólido y parpadeo suave (imposible de perder) */
+  body.header-hidden #headerToggleBtn{
+    width:auto; height:42px; padding:0 18px; border-radius:999px; font-size:.95rem; font-weight:800; letter-spacing:.02em; white-space:nowrap;
+    background:linear-gradient(180deg,#FFF1A8,#FFC93C 50%,#F29A12); color:#1F1300; border:3px solid #FFFFFF;
+    box-shadow:0 0 0 4px rgba(255,201,60,.55), 0 0 26px rgba(255,201,60,.95), 0 6px 14px rgba(0,0,0,.6);
+  }
+
+  /* ---------- entrada para jugar ---------- */
+  .entry-price{ font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:2.6rem; line-height:1; text-align:center; color:var(--gold); text-shadow:0 0 18px rgba(255,201,60,.4); }
+  .entry-price small{ display:block; font-size:.8rem; color:var(--text-muted); font-weight:600; margin-top:4px; text-shadow:none; }
+  .entry-info{ display:flex; flex-direction:column; gap:6px; }
+  .entry-line{ padding:9px 11px; border-radius:10px; background:var(--panel-2); border:1px dashed var(--gold); font-size:.88rem; font-weight:700; word-break:break-word; user-select:all; }
+  .entry-mine-row, .entry-admin-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:8px 0; border-bottom:1px dashed var(--border); font-size:.84rem; }
+  .entry-admin-row.pending{ background:rgba(255,201,60,.06); }
+  .ea-info{ flex:1 1 200px; min-width:0; word-break:break-word; }
+  .ea-info small{ display:block; color:var(--text-muted); font-size:.72rem; }
+  body.playing .banner-pay{ padding:8px 18px; font-size:.95rem; animation:payPulse 1.8s ease-in-out infinite; }
+  @keyframes payPulse{ 50%{ transform:scale(1.05); } }
+  @media (prefers-reduced-motion: reduce){ body.playing .banner-pay{ animation:none; } }
+  body.header-hidden .app{ padding-top:58px; }
