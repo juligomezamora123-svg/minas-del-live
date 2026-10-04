@@ -550,6 +550,7 @@
         try {
           var d = await api('POST', '/api/game/cash', { id: game.id });
           game = d.game; me.balance = d.balance; renderPlay(); loadMyWithdrawals();
+          showCashOverlay();
         } catch (err) { toast(err.message, 'err'); }
         busy = false;
       });
@@ -562,6 +563,25 @@
       if (game.status === 'active' && game.opened.length > 0) askConfirm('¿Reiniciar el juego? Se pierde lo que llevas destapado y se reparten los premios de nuevo.', start); else start();
     }
   });
+
+  // letrero grande superpuesto al cobrar
+  function showCashOverlay() {
+    var unit = game.settings.unit || 'pts', hrs = site.money.payoutHours;
+    $('cashAmount').innerHTML = esc(signed(game.points)) + '<small>' + esc(unit) + '</small>';
+    $('cashPesos').innerHTML = game.pesos > 0
+      ? 'Se sumaron <b>' + pesos(game.pesos) + ' pesos</b> a tu saldo'
+      : 'Sin puntos a favor: no se suma saldo';
+    var eta = $('cashEta');
+    eta.hidden = !(game.pesos > 0 && hrs > 0);
+    eta.textContent = '⏱ Al retirar, el dinero se acredita en tu cuenta en un plazo de ' + hrs + (hrs === 1 ? ' hora' : ' horas') + '.';
+    $('cashWithdraw').hidden = !(me && me.balance >= 1);
+    $('cashOverlay').hidden = false;
+  }
+  function closeCashOverlay() { $('cashOverlay').hidden = true; }
+  $('cashClose').addEventListener('click', closeCashOverlay);
+  $('cashWithdraw').addEventListener('click', function () { closeCashOverlay(); openWithdraw(); });
+  $('cashOverlay').addEventListener('click', function (e) { if (e.target === $('cashOverlay')) closeCashOverlay(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('cashOverlay').hidden) closeCashOverlay(); });
 
   // =====================================================================
   // retiros: ventana, lista y comprobante
@@ -979,7 +999,7 @@
   function renderMoneyForm() {
     var m = adm.draft.money, ae = document.activeElement;
     function put(id, v) { var el = $(id); if (ae !== el) el.value = v; }
-    put('pointValueInput', m.pointValue); put('minWithdrawInput', m.minWithdraw); put('wdTitleInput', m.title); put('wdNoteInput', m.note); put('wdBanksInput', m.banks.join('\n'));
+    put('pointValueInput', m.pointValue); put('minWithdrawInput', m.minWithdraw); put('payoutHoursInput', m.payoutHours); put('wdTitleInput', m.title); put('wdNoteInput', m.note); put('wdBanksInput', m.banks.join('\n'));
     $('wdAskDoc').checked = !!m.askDoc;
     document.querySelectorAll('#wdConfig [data-wd-method]').forEach(function (c) { c.checked = !!m.methods[c.dataset.wdMethod]; });
   }
@@ -987,6 +1007,7 @@
     var m = adm.draft.money;
     m.pointValue = Math.max(1, Math.floor(Number($('pointValueInput').value)) || 1);
     m.minWithdraw = Math.max(0, Math.floor(Number($('minWithdrawInput').value)) || 0);
+    m.payoutHours = Math.max(0, Math.min(720, Math.floor(Number($('payoutHoursInput').value)) || 0));
     m.title = $('wdTitleInput').value.slice(0, 40);
     m.note = $('wdNoteInput').value.slice(0, 200);
     m.banks = $('wdBanksInput').value.split('\n').map(function (b) { return b.trim().slice(0, 40); }).filter(Boolean).slice(0, 40);

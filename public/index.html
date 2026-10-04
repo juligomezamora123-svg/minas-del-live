@@ -176,6 +176,7 @@
         <div id="wdConfig" class="wd-config">
           <label class="rule-row"><span>Valor de cada punto (pesos)<small>Con 1, cada punto vale un peso</small></span><input id="pointValueInput" type="number" min="1" step="1"></label>
           <label class="rule-row"><span>Retiro mínimo (pesos)<small>0 = sin mínimo</small></span><input id="minWithdrawInput" type="number" min="0" step="1"></label>
+          <label class="rule-row"><span>Horas para acreditar el pago<small>Se avisa al cobrar. 0 = no mostrar</small></span><input id="payoutHoursInput" type="number" min="0" max="720" step="1"></label>
           <label class="rule-row"><span>Título de la ventana</span><input id="wdTitleInput" type="text" maxlength="40" style="width:170px;"></label>
           <div class="text-field-row"><label for="wdNoteInput">Mensaje en la ventana (opcional)</label><textarea id="wdNoteInput" maxlength="200" placeholder="Ej: Los pagos se hacen en 24 horas hábiles."></textarea></div>
           <div class="text-field-row"><label for="wdBanksInput">Bancos sugeridos (uno por línea)</label><textarea id="wdBanksInput" maxlength="600" placeholder="Bancolombia&#10;Davivienda&#10;Banco de Bogotá"></textarea></div>
@@ -265,6 +266,19 @@
 </div>
 
 <!-- ===================== VENTANAS ===================== -->
+<div id="cashOverlay" class="confirm-overlay cash-overlay" hidden>
+  <div class="cash-card" role="dialog" aria-live="polite">
+    <div class="cash-label">💰 ¡Puntos cobrados!</div>
+    <div id="cashAmount" class="cash-amount mono"></div>
+    <div id="cashPesos" class="cash-pesos"></div>
+    <div id="cashEta" class="cash-eta"></div>
+    <div class="cash-actions">
+      <button id="cashWithdraw" type="button" class="btn btn-primary">🏦 Retirar a cuenta bancaria o cripto</button>
+      <button id="cashClose" type="button" class="btn">Seguir</button>
+    </div>
+  </div>
+</div>
+
 <div id="withdrawModal" class="confirm-overlay" hidden>
   <form id="withdrawForm" class="confirm-box wd-box" autocomplete="off">
     <h3 id="wdTitle" class="display" style="margin:0;">🏦 Retirar a cuenta bancaria o cripto</h3>

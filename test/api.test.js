@@ -145,6 +145,7 @@ test('el dueño configura premios; el jugador no ve cuántos hay ni el reparto',
   assert.equal(r.data.config.totalCells, 20);
   r = await owner.put('/api/admin/site', { money: { pointValue: 2, minWithdraw: 100, methods: { banco: true, breb: true, usdt: true, nequi: true } } });
   assert.equal(r.data.money.pointValue, 2);
+  assert.equal(r.data.money.payoutHours, 12, 'por defecto el pago se acredita en 12 horas');
   r = await ana.get('/api/game?page=player');
   assert.equal(r.status, 200);
   const g = r.data.game;
