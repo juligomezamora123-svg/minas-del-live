@@ -424,3 +424,27 @@ test('cuentas inscritas: se guardan completas, se usan sin pedir datos y son pri
   assert.equal((await owner.del('/api/accounts/' + id)).status, 200);
   assert.equal((await owner.post('/api/withdrawals', { amount: 100, accountId: id })).status, 404, 'cuenta eliminada');
 });
+
+test('inscribir una cuenta bancaria exige número, tipo de cuenta, nombre e identificación (aunque el documento esté apagado en retiros)', async () => {
+  const money = (await owner.get('/api/admin/site')).data.money;
+  await owner.put('/api/admin/site', { money: { ...money, askDoc: false } });
+  const base = { bank: 'Davivienda', acctType: 'Corriente', number: '9876543210', holder: 'Pedro Pérez', doc: '1020304050' };
+  assert.equal((await owner.post('/api/accounts', { method: 'banco', details: { ...base, doc: '' } })).status, 400, 'sin identificación');
+  assert.equal((await owner.post('/api/accounts', { method: 'banco', details: { ...base, acctType: '' } })).status, 400, 'sin tipo de cuenta');
+  assert.equal((await owner.post('/api/accounts', { method: 'banco', details: { ...base, holder: '' } })).status, 400, 'sin nombre');
+  assert.equal((await owner.post('/api/accounts', { method: 'banco', details: { ...base, number: '' } })).status, 400, 'sin número');
+  const ok = await owner.post('/api/accounts', { method: 'banco', details: base });
+  assert.equal(ok.status, 200);
+  // al retirar con una cuenta inscrita, el retiro lleva también la identificación
+  await owner.post('/api/withdrawals', { amount: 100, accountId: ok.data.account.id, page: 'live' });
+  const w = (await owner.get('/api/withdrawals?mine=1')).data.withdrawals[0];
+  assert.equal(w.details.doc, '1020304050');
+  assert.equal(w.details.acctType, 'Corriente');
+  // guardar una cuenta al retirar también exige la identificación
+  const bad = await owner.post('/api/withdrawals', { amount: 100, method: 'banco', details: { ...base, number: '5555555555', doc: '' }, saveAccount: true, page: 'live' });
+  assert.equal(bad.status, 400);
+  // retirar sin guardar sigue pudiendo omitir el documento si está apagado
+  const free = await owner.post('/api/withdrawals', { amount: 100, method: 'banco', details: { ...base, number: '5555555555', doc: '' }, page: 'live' });
+  assert.equal(free.status, 200);
+  await owner.put('/api/admin/site', { money });
+});

@@ -627,7 +627,7 @@
     var m = $('wdMethod').value;
     wdModal.querySelectorAll('[data-methods]').forEach(function (f) {
       var off = f.dataset.methods.split(' ').indexOf(m) < 0;
-      if (f.classList.contains('wd-doc') && !site.money.askDoc) off = true;
+      if (f.classList.contains('wd-doc') && !(site.money.askDoc || wdMode === 'enroll' || $('wdSave').checked)) off = true;
       if (usingSaved()) off = true;
       f.hidden = off;
     });
@@ -695,6 +695,7 @@
     hideWdFields();
     $('wdTitle').textContent = enroll ? '➕ Inscribir una cuenta para retirar' : m.title;
     $('wdNote').hidden = enroll || !m.note; $('wdNote').textContent = m.note;
+    $('wdEnrollNote').hidden = !enroll;
     var act = activeMethods(), sel = $('wdMethod'), prev = sel.value;
     sel.innerHTML = act.map(function (k) { return '<option value="' + k + '">' + esc(METHOD_TXT[k]) + '</option>'; }).join('');
     if (act.indexOf(prev) >= 0) sel.value = prev;
@@ -727,6 +728,7 @@
   $('wdCancel').addEventListener('click', closeWithdraw);
   $('wdMethod').addEventListener('change', refreshWdFields);
   $('wdAccount').addEventListener('change', applyAcctChoice);
+  $('wdSave').addEventListener('change', refreshWdFields);
   $('wdAmount').addEventListener('input', updateWdRemain);
   $('wdAll').addEventListener('click', function () { $('wdAmount').value = Math.floor(me.balance); updateWdRemain(); });
   wdModal.addEventListener('click', function (e) { if (e.target === wdModal) closeWithdraw(); });
