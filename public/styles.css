@@ -582,3 +582,8 @@
   }
   body.playing .cell.just-revealed{ animation:cellPopMax 1.15s cubic-bezier(.24,1.8,.46,1); z-index:30; position:relative; }
   body.no-pop.playing .cell.just-revealed{ animation:none; }
+
+  /* el estado "Destapando premios…" va debajo del botón de tamaño del tablero */
+  .board-ctl{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .stage-status{ font-family:'Bricolage Grotesque','Manrope',system-ui,sans-serif; font-weight:700; font-size:1rem; color:var(--text); min-height:1.2em; text-align:center; }
+  .stage-status:empty{ display:none; }

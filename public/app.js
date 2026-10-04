@@ -500,8 +500,7 @@
         '<div class="banner-actions">' + again + wd + '</div>';
     }
     var sum = game.points, done = game.opened.length >= game.totalCells;
-    return '<div class="banner-eyebrow">' + (done ? 'Tablero completo' : (game.page === 'live' ? 'En vivo' : 'Tu juego')) + '</div>' +
-      '<div class="banner-main">' + (done ? '🎉 ¡Destapaste todo!' : '✨ Destapando premios...') + '</div>' +
+    return '<div class="banner-eyebrow">' + (game.page === 'live' ? 'En vivo' : 'Tu juego') + '</div>' +
       (game.settings.showTotal ? '<div class="banner-total">Suma de cajones abiertos: <b class="mono ' + (sum < 0 ? 'neg' : 'pos') + '">' + signed(sum) + ' ' + unit + '</b></div>' : '') +
       '<div class="banner-actions"><button type="button" class="btn banner-cash" data-action="cash"' + (game.opened.length ? '' : ' disabled') + '>💰 Cobrar puntos</button>' +
       '<button type="button" class="btn banner-restart" data-action="restart">🔁 Reiniciar juego</button>' + wd + '</div>';
@@ -516,6 +515,7 @@
     $('grid').style.setProperty('--rows', Math.ceil(game.totalCells / cols));
     $('turnBanner').innerHTML = bannerHTML();
     $('grid').innerHTML = gridHTML();
+    $('stageStatus').textContent = game.status !== 'active' ? '' : (game.opened.length >= game.totalCells ? '🎉 ¡Destapaste todo!' : '✨ Destapando premios...');
     $('progressText').textContent = 'Destapadas ' + game.opened.length + '/' + game.totalCells + ' · Juego ' + game.code;
     var who = $('playerWho');
     who.hidden = false;
