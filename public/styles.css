@@ -660,3 +660,11 @@
   .wd-usdt{ display:block; margin-top:6px; padding:8px 10px; border-radius:10px; background:rgba(27,227,154,.1); border:1px dashed var(--teal); font-size:.88rem; color:var(--text); line-height:1.4; }
   .wd-usdt b{ color:var(--teal); font-size:1.05rem; }
   .wd-usdt small{ color:var(--text-muted); font-size:.72rem; }
+
+  .wd-check{ display:flex; align-items:center; gap:8px; font-size:.82rem; font-weight:700; color:var(--text); cursor:pointer; }
+  .wd-check input{ width:18px; height:18px; accent-color:var(--gold); }
+  .wd-check[hidden]{ display:none!important; }
+  .acct-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:9px 0; border-bottom:1px dashed var(--border); font-size:.86rem; }
+  .acct-label{ flex:1 1 auto; min-width:0; word-break:break-word; }
+  .acct-label small{ color:var(--text-muted); }
+  #wdBalanceInfo[hidden]{ display:none; }

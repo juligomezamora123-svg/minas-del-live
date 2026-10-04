@@ -235,6 +235,11 @@
           <p id="pwMsg" class="auth-msg" role="alert" style="margin:0;"></p>
         </form>
       </section>
+      <section class="panel" id="accountsPanel">
+        <h2>Mis cuentas para retirar<small>Inscríbelas una vez y al cobrar solo eliges cuál usar, sin escribir los datos otra vez</small></h2>
+        <div id="myAccountsList"></div>
+        <button id="addAccountBtn" type="button" class="btn btn-primary" style="margin-top:10px;">➕ Inscribir una cuenta</button>
+      </section>
       <section class="panel">
         <h2>Historial de juegos<small id="historySub">Cada juego tiene un código único</small></h2>
         <div id="historyList"></div>
@@ -289,10 +294,13 @@
     <p id="wdNote" class="hint" style="margin:0;" hidden></p>
     <p id="wdBalanceInfo" class="wd-info"></p>
     <div class="wd-grid">
-      <label class="wd-field wd-wide">Monto (pesos)
+      <label class="wd-field wd-wide" id="wdAmountWrap">Monto (pesos)
         <span class="wd-row"><input id="wdAmount" type="number" min="1" step="1" required><button type="button" id="wdAll" class="btn">Todo</button></span>
         <span id="wdRemain" class="wd-remain"></span>
         <span id="wdUsdtInfo" class="wd-usdt" hidden></span>
+      </label>
+      <label class="wd-field wd-wide" id="wdAcctWrap" hidden>Cuenta donde recibes el dinero
+        <select id="wdAccount"></select>
       </label>
       <label class="wd-field wd-wide" id="wdMethodWrap">Medio de pago
         <select id="wdMethod"></select>
@@ -312,6 +320,7 @@
       <label class="wd-field wd-doc" data-methods="banco">Documento del titular<input id="wdDoc" type="password" autocomplete="new-password" maxlength="20" inputmode="numeric" placeholder="00000000"></label>
       <label class="wd-field wd-wide" data-methods="otro">Datos para pagarte<textarea id="wdOther" maxlength="200" rows="2"></textarea></label>
     </div>
+    <label class="wd-check" id="wdSaveWrap"><input type="checkbox" id="wdSave"> 💾 Guardar esta cuenta para próximos retiros</label>
     <datalist id="wdBanks"></datalist>
     <p id="wdMsg" class="auth-msg" role="alert" style="margin:0;"></p>
     <div class="confirm-actions">

@@ -593,12 +593,13 @@
     $('cashOverlay').hidden = false;
   }
   // mismo letrero grande después de enviar un retiro: solo el valor enviado y el aviso de las horas
-  function showWithdrawOverlay(amount, method, details, conv) {
+  function showWithdrawOverlay(amount, method, details, conv, label) {
     var hrs = site.money.payoutHours;
     $('cashLabel').textContent = '🏦 ¡Retiro enviado!';
     $('cashAmount').innerHTML = esc(pesos(amount)) + '<small>pesos</small>';
     var how = METHOD_TXT[method] || method;
-    if (method === 'banco' && details && details.bank) how += ' · ' + details.bank;
+    if (label) how = label;
+    else if (method === 'banco' && details && details.bank) how += ' · ' + details.bank;
     $('cashPesos').innerHTML = 'Enviado por <b>' + esc(how) + '</b>';
     if (conv) {
       $('cashAmount').innerHTML = esc(fmt2(conv.usdt)) + '<small>USDT</small>';
@@ -627,6 +628,7 @@
     wdModal.querySelectorAll('[data-methods]').forEach(function (f) {
       var off = f.dataset.methods.split(' ').indexOf(m) < 0;
       if (f.classList.contains('wd-doc') && !site.money.askDoc) off = true;
+      if (usingSaved()) off = true;
       f.hidden = off;
     });
     $('wdNumberLabel').textContent = m === 'banco' ? 'Número de cuenta' : 'Celular';
@@ -635,20 +637,20 @@
   function wdMsg(t) { $('wdMsg').textContent = t || ''; }
   function updateWdRemain() {
     var a = Math.floor(Number($('wdAmount').value)) || 0;
-    $('wdRemain').textContent = a >= 1 && a <= me.balance ? 'Te quedarán ' + pesos(me.balance - a) + ' pesos' : '';
+    $('wdRemain').textContent = wdMode === 'withdraw' && a >= 1 && a <= me.balance ? 'Te quedarán ' + pesos(me.balance - a) + ' pesos' : '';
     updateUsdtInfo();
   }
   // USDT: se muestra cuánto llegaría, con la TRM del momento menos el descuento (el servidor hace el cálculo final)
   var usdtRate = null, usdtRateAt = 0;
   async function updateUsdtInfo() {
     var box = $('wdUsdtInfo'), a = Math.floor(Number($('wdAmount').value)) || 0;
-    if ($('wdMethod').value !== 'usdt') { box.hidden = true; return; }
+    if (currentMethod() !== 'usdt' || wdMode !== 'withdraw') { box.hidden = true; return; }
     box.hidden = false;
     if (!usdtRate || Date.now() - usdtRateAt > 60000) {
       box.textContent = 'Consultando la TRM…';
       try { usdtRate = await api('GET', '/api/usdt-rate'); usdtRateAt = Date.now(); }
       catch (e) { box.textContent = 'No se pudo consultar la TRM ahora; al enviar se vuelve a intentar.'; return; }
-      if ($('wdMethod').value !== 'usdt') { box.hidden = true; return; }
+      if (currentMethod() !== 'usdt') { box.hidden = true; return; }
       a = Math.floor(Number($('wdAmount').value)) || 0;
     }
     var line = 'TRM de hoy: $' + fmt2(usdtRate.trm) + ' · descuento ' + usdtRate.discount + '%';
@@ -671,48 +673,93 @@
     SENS.forEach(function (id) { $(id).type = 'password'; var e = document.querySelector('[data-eye="' + id + '"]'); if (e) e.textContent = '👁'; });
   }
 
-  function openWithdraw() {
-    if (!me || me.balance < 1) return;
-    var m = site.money;
+  // cuentas inscritas por el jugador (el servidor solo manda una etiqueta, nunca el número completo)
+  var accounts = [], wdMode = 'withdraw';
+  async function loadAccounts() {
+    try { accounts = (await api('GET', '/api/accounts')).accounts; } catch (e) { accounts = []; }
+    return accounts;
+  }
+  function usableAccounts() { return accounts.filter(function (a) { return site.money.methods[a.method]; }); }
+  function usingSaved() { return wdMode === 'withdraw' && !!$('wdAccount').value; }
+  function savedAccount() { return accounts.filter(function (a) { return a.id === $('wdAccount').value; })[0] || null; }
+  function currentMethod() { var a = usingSaved() ? savedAccount() : null; return a ? a.method : $('wdMethod').value; }
+  function applyAcctChoice() {
+    var saved = usingSaved();
+    $('wdMethodWrap').hidden = saved || activeMethods().length < 2;
+    $('wdSaveWrap').hidden = saved || wdMode !== 'withdraw';
+    refreshWdFields();
+  }
+  function buildWdForm(mode) {
+    wdMode = mode;
+    var m = site.money, enroll = mode === 'enroll';
     hideWdFields();
-    $('wdTitle').textContent = m.title;
-    $('wdNote').hidden = !m.note; $('wdNote').textContent = m.note;
+    $('wdTitle').textContent = enroll ? '➕ Inscribir una cuenta para retirar' : m.title;
+    $('wdNote').hidden = enroll || !m.note; $('wdNote').textContent = m.note;
     var act = activeMethods(), sel = $('wdMethod'), prev = sel.value;
     sel.innerHTML = act.map(function (k) { return '<option value="' + k + '">' + esc(METHOD_TXT[k]) + '</option>'; }).join('');
     if (act.indexOf(prev) >= 0) sel.value = prev;
-    $('wdMethodWrap').hidden = act.length < 2;
     $('wdBanks').innerHTML = m.banks.map(function (b) { return '<option value="' + esc(b) + '">'; }).join('');
-    refreshWdFields();
-    $('wdBalanceInfo').textContent = 'Saldo disponible: ' + pesos(me.balance) + ' pesos' + (m.minWithdraw ? ' · Mínimo ' + pesos(m.minWithdraw) : '');
-    $('wdAmount').max = me.balance; $('wdAmount').value = '';
+    $('wdAmountWrap').hidden = enroll; $('wdAmount').required = !enroll;
+    $('wdBalanceInfo').hidden = enroll;
+    $('wdSubmit').textContent = enroll ? 'Guardar cuenta' : 'Solicitar retiro';
+    var list = enroll ? [] : usableAccounts(), as = $('wdAccount'), prevAcc = as.value;
+    as.innerHTML = list.map(function (a) { return '<option value="' + esc(a.id) + '">' + esc(a.label) + '</option>'; }).join('') +
+      (list.length ? '<option value="">➕ Otra cuenta (escribir los datos)</option>' : '');
+    if (list.some(function (a) { return a.id === prevAcc; })) as.value = prevAcc;
+    $('wdAcctWrap').hidden = !list.length;
+    $('wdSave').checked = false;
+    if (!enroll) {
+      $('wdBalanceInfo').textContent = 'Saldo disponible: ' + pesos(me.balance) + ' pesos' + (m.minWithdraw ? ' · Mínimo ' + pesos(m.minWithdraw) : '');
+      $('wdAmount').max = me.balance; $('wdAmount').value = '';
+    }
+    applyAcctChoice();
     updateWdRemain(); wdMsg('');
     wdModal.hidden = false;
   }
+  async function openWithdraw() {
+    if (!me || me.balance < 1) return;
+    await loadAccounts();
+    buildWdForm('withdraw');
+  }
+  function openEnroll() { buildWdForm('enroll'); }
   function closeWithdraw() { wdModal.hidden = true; }
   $('withdrawBtn').addEventListener('click', openWithdraw);
   $('wdCancel').addEventListener('click', closeWithdraw);
   $('wdMethod').addEventListener('change', refreshWdFields);
+  $('wdAccount').addEventListener('change', applyAcctChoice);
   $('wdAmount').addEventListener('input', updateWdRemain);
   $('wdAll').addEventListener('click', function () { $('wdAmount').value = Math.floor(me.balance); updateWdRemain(); });
   wdModal.addEventListener('click', function (e) { if (e.target === wdModal) closeWithdraw(); });
 
   $('withdrawForm').addEventListener('submit', async function (e) {
     e.preventDefault();
+    var enroll = wdMode === 'enroll', saved = usingSaved(), acct = saved ? savedAccount() : null;
     var amount = Math.floor(Number($('wdAmount').value)), method = $('wdMethod').value;
-    if (!(amount >= 1)) return wdMsg('Escribe cuántos pesos quieres retirar.');
+    if (!enroll && !(amount >= 1)) return wdMsg('Escribe cuántos pesos quieres retirar.');
     var details = {
       bank: $('wdBank').value, acctType: $('wdAcctType').value, number: $('wdNumber').value, holder: $('wdHolder').value, doc: $('wdDoc').value,
       keyType: $('wdKeyType').value, key: $('wdKey').value, wallet: $('wdWallet').value, other: $('wdOther').value,
     };
+    var clearFields = function () { ['wdBank', 'wdNumber', 'wdHolder', 'wdDoc', 'wdKey', 'wdWallet', 'wdOther', 'wdAmount'].forEach(function (k) { $(k).value = ''; }); };
     $('wdSubmit').disabled = true;
     try {
-      var d = await api('POST', '/api/withdrawals', { amount: amount, method: method, details: details, page: pageOfView() });
-      me.balance = d.balance;
-      ['wdBank', 'wdNumber', 'wdHolder', 'wdDoc', 'wdKey', 'wdWallet', 'wdOther', 'wdAmount'].forEach(function (k) { $(k).value = ''; });
-      closeWithdraw();
-      renderChrome();
-      if (playing()) { renderPlay(); loadMyWithdrawals(); }
-      showWithdrawOverlay(amount, method, details, d.conversion);
+      if (enroll) {
+        var r = await api('POST', '/api/accounts', { method: method, details: details });
+        clearFields(); closeWithdraw();
+        await loadAccounts(); renderAccountsList();
+        toast(r.already ? 'Esa cuenta ya estaba inscrita.' : '✓ Cuenta inscrita: ' + r.account.label, 'ok');
+      } else {
+        var body = saved ? { amount: amount, accountId: acct.id, page: pageOfView() }
+          : { amount: amount, method: method, details: details, page: pageOfView(), saveAccount: $('wdSave').checked };
+        var d = await api('POST', '/api/withdrawals', body);
+        me.balance = d.balance;
+        clearFields();
+        closeWithdraw();
+        renderChrome();
+        if (playing()) { renderPlay(); loadMyWithdrawals(); }
+        showWithdrawOverlay(amount, saved ? acct.method : method, details, d.conversion, saved ? acct.label : '');
+        if (d.saved) toast('💾 Cuenta guardada para próximos retiros.', 'ok');
+      }
     } catch (err) { wdMsg(err.message); }
     $('wdSubmit').disabled = false;
   });
@@ -1332,6 +1379,7 @@
     applyTheme(null);
     $('pfUser').value = me.username; $('pfEmail').value = me.email; $('pfName').value = me.fullName || ''; $('pfPhone').value = me.phone ? '+' + me.phone : '';
     $('pfPassWrap').hidden = true; $('pfCurrent').value = '';
+    await loadAccounts(); renderAccountsList();
     var d = await api('GET', '/api/history');
     var hist = d.games, done = hist.filter(function (h) { return h.status !== 'active'; }), won = hist.filter(function (h) { return h.status === 'cashed'; });
     $('historySub').textContent = 'Cada juego tiene un código único · ' + done.length + ' terminados';
@@ -1339,6 +1387,24 @@
       (done.length ? '<p class="hist-stats">Cobrados: ' + won.length + ' · Total ganado: ' + pesos(won.reduce(function (s, h) { return s + h.pesos; }, 0)) + ' · Bombas rojas: ' + hist.filter(function (h) { return h.status === 'bomb'; }).length + '</p>' : '') +
       (hist.length ? hist.map(gameRowHTML).join('') : '<p class="empty-note">Todavía no has jugado. Tus juegos aparecerán aquí, cada uno con su código.</p>');
   }
+  function renderAccountsList() {
+    $('myAccountsList').innerHTML = accounts.length
+      ? accounts.map(function (a) {
+        return '<div class="acct-row"><span class="acct-label">🏦 ' + esc(a.label) + (site.money.methods[a.method] ? '' : ' <small>(medio no disponible ahora)</small>') + '</span>' +
+          '<button type="button" class="btn btn-danger" data-del-acct="' + esc(a.id) + '">Eliminar</button></div>';
+      }).join('')
+      : '<p class="empty-note">Todavía no has inscrito cuentas. Inscribe las que quieras y al cobrar elegirás una sin escribir los datos.</p>';
+  }
+  $('addAccountBtn').addEventListener('click', openEnroll);
+  $('myAccountsList').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-del-acct]');
+    if (!b) return;
+    var a = accounts.filter(function (x) { return x.id === b.dataset.delAcct; })[0];
+    if (!a) return;
+    askConfirm('¿Eliminar la cuenta "' + a.label + '"? Los retiros ya enviados no cambian.', async function () {
+      try { await api('DELETE', '/api/accounts/' + a.id); await loadAccounts(); renderAccountsList(); } catch (err) { toast(err.message, 'err'); }
+    });
+  });
   function pfMsg(id, t, ok) { var m = $(id); m.textContent = t || ''; m.className = 'auth-msg' + (ok ? ' ok' : ''); m.style.margin = '0'; }
   $('pfEmail').addEventListener('input', function () { $('pfPassWrap').hidden = this.value.trim().toLowerCase() === me.email; });
   $('profileForm').addEventListener('submit', async function (e) {

@@ -390,3 +390,37 @@ test('la ruta reescrita por Vercel (/api/index?__p=...) llega al mismo lugar', a
   assert.ok(Array.isArray(r.data.withdrawals));
   assert.equal((await anon.get('/api/index?__p=no/existe')).status, 404);
 });
+
+test('cuentas inscritas: se guardan completas, se usan sin pedir datos y son privadas', async () => {
+  let r = await owner.post('/api/accounts', { method: 'banco', details: { ...BANK, number: '12' } });
+  assert.equal(r.status, 400, 'datos incompletos no se inscriben');
+  r = await owner.post('/api/accounts', { method: 'banco', details: BANK });
+  assert.equal(r.status, 200);
+  assert.match(r.data.account.label, /Bancolombia · Ahorros ····7890 · Ana Prueba/);
+  const id = r.data.account.id;
+  assert.equal((await owner.post('/api/accounts', { method: 'banco', details: BANK })).data.already, true, 'la misma cuenta no se duplica');
+  r = await owner.post('/api/accounts', { method: 'breb', details: { keyType: 'Correo', key: 'dueno@x.com', holder: 'Dueño' } });
+  assert.equal(r.status, 200);
+  r = await owner.get('/api/accounts');
+  assert.equal(r.data.accounts.length, 2);
+  assert.ok(!JSON.stringify(r.data).includes('1234567890'), 'la lista no trae el número completo');
+  assert.equal((await ana.get('/api/accounts')).data.accounts.length, 0, 'cada quien ve solo las suyas');
+  assert.equal((await ana.post('/api/withdrawals', { amount: 100, accountId: id })).status, 404, 'no se usa la cuenta de otro');
+
+  const before = (await owner.get('/api/me')).data.user.balance;
+  r = await owner.post('/api/withdrawals', { amount: 100, accountId: id, page: 'live' });
+  assert.equal(r.status, 200);
+  assert.equal(r.data.balance, before - 100);
+  const w = (await owner.get('/api/withdrawals?mine=1')).data.withdrawals[0];
+  assert.equal(w.method, 'banco');
+  assert.equal(w.details.number, '1234567890', 'el retiro lleva los datos completos de la cuenta inscrita');
+
+  r = await owner.post('/api/withdrawals', { amount: 100, method: 'nequi', details: { number: '3001112233', holder: 'Dueño' }, saveAccount: true });
+  assert.equal(r.status, 200);
+  assert.match(r.data.saved.label, /Nequi ····2233/);
+  assert.equal((await owner.get('/api/accounts')).data.accounts.length, 3);
+
+  assert.equal((await ana.del('/api/accounts/' + id)).status, 404);
+  assert.equal((await owner.del('/api/accounts/' + id)).status, 200);
+  assert.equal((await owner.post('/api/withdrawals', { amount: 100, accountId: id })).status, 404, 'cuenta eliminada');
+});
