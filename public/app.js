@@ -512,6 +512,8 @@
     document.body.classList.toggle('no-pop', !game.settings.popAnimation);
     var cols = game.settings.columns > 0 ? game.settings.columns : Math.max(10, Math.ceil(Math.sqrt(game.totalCells)));
     $('grid').style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+    $('grid').style.setProperty('--cols', cols);
+    $('grid').style.setProperty('--rows', Math.ceil(game.totalCells / cols));
     $('turnBanner').innerHTML = bannerHTML();
     $('grid').innerHTML = gridHTML();
     $('progressText').textContent = 'Destapadas ' + game.opened.length + '/' + game.totalCells + ' · Juego ' + game.code;

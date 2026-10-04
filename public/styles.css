@@ -548,3 +548,37 @@
   @media (min-width:860px){
     body.wide.playing #stageCol > #turnBanner{ margin-bottom:10px; }
   }
+
+  /* ---------- "Ajustar a pantalla": el tablero llena todo el espacio libre (cuadros rectangulares más grandes) ---------- */
+  @media (min-width:860px){
+    body.wide.playing:not(.board-big) #stageCol > #grid{
+      max-width:none; width:100%; margin:0;
+      height:calc(100vh - var(--chrome, 170px)); min-height:320px;
+      grid-auto-rows:1fr; container-type:size; gap:clamp(4px, .9cqmin, 10px);
+    }
+    body.wide.playing:not(.board-big) .cell{ aspect-ratio:auto; border-radius:clamp(6px, 1.2cqmin, 14px); }
+    body.wide.playing:not(.board-big) .cell.hidden{
+      font-size:clamp(.8rem, min(calc(100cqw / var(--cols, 10) * .36), calc(100cqh / var(--rows, 10) * .52)), 2.8rem);
+    }
+    body.wide.playing:not(.board-big) .cell.revealed{ gap:0; }
+    body.wide.playing:not(.board-big) .cell.revealed .cell-emoji{
+      font-size:clamp(1rem, min(calc(100cqw / var(--cols, 10) * .46), calc(100cqh / var(--rows, 10) * .5)), 4rem);
+    }
+    body.wide.playing:not(.board-big) .cell.revealed .cell-points{
+      font-size:clamp(.6rem, min(calc(100cqw / var(--cols, 10) * .22), calc(100cqh / var(--rows, 10) * .24)), 1.7rem);
+    }
+    body.wide.playing:not(.board-big) .cell.revealed .cell-points.cell-points-wipe{
+      font-size:clamp(.55rem, min(calc(100cqw / var(--cols, 10) * .19), calc(100cqh / var(--rows, 10) * .2)), 1.3rem); padding:1px 6px;
+    }
+  }
+
+  /* ---------- al destapar, la casilla salta por encima de las demás, mucho más grande ---------- */
+  @keyframes cellPopMax{
+    0%{ transform:scale(1) rotate(0deg); }
+    18%{ transform:scale(2.9) rotate(-7deg); box-shadow:0 0 0 18px rgba(255,255,255,.3), 0 30px 70px rgba(0,0,0,.7), inset 0 3px 0 rgba(255,255,255,.4); }
+    42%{ transform:scale(2.1) rotate(5deg); box-shadow:0 0 0 10px rgba(255,255,255,.2), 0 20px 50px rgba(0,0,0,.6); }
+    68%{ transform:scale(1.4) rotate(-2deg); }
+    100%{ transform:scale(1) rotate(0deg); }
+  }
+  body.playing .cell.just-revealed{ animation:cellPopMax 1.15s cubic-bezier(.24,1.8,.46,1); z-index:30; position:relative; }
+  body.no-pop.playing .cell.just-revealed{ animation:none; }
