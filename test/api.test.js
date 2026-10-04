@@ -448,3 +448,22 @@ test('inscribir una cuenta bancaria exige número, tipo de cuenta, nombre e iden
   assert.equal(free.status, 200);
   await owner.put('/api/admin/site', { money });
 });
+
+test('billeteras: una configuración vieja recibe Nequi, Daviplata y la lista de bancos ampliada; una guardada no se toca', async () => {
+  const { query } = await import('../lib/db.js');
+  const prev = (await query(`SELECT value FROM site WHERE key = 'money'`))[0]?.value;
+  await query(`INSERT INTO site (key, value) VALUES ('money', $1) ON CONFLICT (key) DO UPDATE SET value = $1`,
+    [JSON.stringify({ pointValue: 1, methods: { banco: true }, banks: ['Bancolombia', 'Mi Banco Local'] })]);
+  let m = (await anon.get('/api/me')).data.site.money;
+  assert.equal(m.methods.nequi, true);
+  assert.equal(m.methods.daviplata, true);
+  assert.deepEqual(m.banks.slice(0, 2), ['Bancolombia', 'Mi Banco Local'], 'lo que ya tenía queda primero');
+  for (const b of ['Nequi', 'Daviplata', 'Movii', 'Dale!', 'RappiPay', 'Lulo Bank', 'Nu Colombia']) assert.ok(m.banks.includes(b), b);
+  assert.equal(m.banks.filter((b) => b === 'Bancolombia').length, 1, 'sin repetidos');
+  // al guardar desde el panel queda marcada y si apaga Nequi, sigue apagado
+  await owner.put('/api/admin/site', { money: { ...m, methods: { banco: true, nequi: false, daviplata: false } } });
+  m = (await anon.get('/api/me')).data.site.money;
+  assert.equal(m.methods.nequi, false);
+  assert.equal(m.methods.daviplata, false);
+  if (prev) await query(`UPDATE site SET value = $1 WHERE key = 'money'`, [prev]);
+});

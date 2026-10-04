@@ -1119,7 +1119,7 @@
     m.usdtDiscount = $('usdtDiscountInput').value === '' || !isFinite(ud) ? 3 : Math.max(0, Math.min(50, ud));
     m.title = $('wdTitleInput').value.slice(0, 40);
     m.note = $('wdNoteInput').value.slice(0, 200);
-    m.banks = $('wdBanksInput').value.split('\n').map(function (b) { return b.trim().slice(0, 40); }).filter(Boolean).slice(0, 40);
+    m.banks = $('wdBanksInput').value.split('\n').map(function (b) { return b.trim().slice(0, 40); }).filter(Boolean).slice(0, 60);
     m.askDoc = $('wdAskDoc').checked;
     var ms = {};
     document.querySelectorAll('#wdConfig [data-wd-method]').forEach(function (c) { ms[c.dataset.wdMethod] = c.checked; });
