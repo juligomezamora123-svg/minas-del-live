@@ -579,6 +579,8 @@
   // letrero grande superpuesto al cobrar
   function showCashOverlay() {
     var unit = game.settings.unit || 'pts', hrs = site.money.payoutHours;
+    $('cashLabel').textContent = '💰 ¡Puntos cobrados!';
+    $('cashPesos').hidden = false;
     $('cashAmount').innerHTML = esc(signed(game.points)) + '<small>' + esc(unit) + '</small>';
     $('cashPesos').innerHTML = game.pesos > 0
       ? 'Se sumaron <b>' + pesos(game.pesos) + ' pesos</b> a tu saldo'
@@ -587,6 +589,21 @@
     eta.hidden = !(game.pesos > 0 && hrs > 0);
     eta.textContent = '⏱ Al retirar, el dinero se acredita en tu cuenta en un plazo de ' + hrs + (hrs === 1 ? ' hora' : ' horas') + '.';
     $('cashWithdraw').hidden = !(me && me.balance >= 1);
+    $('cashOverlay').hidden = false;
+  }
+  // mismo letrero grande después de enviar un retiro: solo el valor enviado y el aviso de las horas
+  function showWithdrawOverlay(amount, method, details) {
+    var hrs = site.money.payoutHours;
+    $('cashLabel').textContent = '🏦 ¡Retiro enviado!';
+    $('cashAmount').innerHTML = esc(pesos(amount)) + '<small>pesos</small>';
+    var how = METHOD_TXT[method] || method;
+    if (method === 'banco' && details && details.bank) how += ' · ' + details.bank;
+    $('cashPesos').innerHTML = 'Enviado por <b>' + esc(how) + '</b>';
+    $('cashPesos').hidden = false;
+    var eta = $('cashEta');
+    eta.hidden = !(hrs > 0);
+    eta.textContent = '⏱ El saldo llega a tu cuenta en un plazo de ' + hrs + (hrs === 1 ? ' hora' : ' horas') + '.';
+    $('cashWithdraw').hidden = true;
     $('cashOverlay').hidden = false;
   }
   function closeCashOverlay() { $('cashOverlay').hidden = true; }
@@ -669,9 +686,9 @@
       me.balance = d.balance;
       ['wdBank', 'wdNumber', 'wdHolder', 'wdDoc', 'wdKey', 'wdWallet', 'wdOther', 'wdAmount'].forEach(function (k) { $(k).value = ''; });
       closeWithdraw();
-      toast('Solicitud enviada. Queda pendiente hasta que el dueño la pague.', 'ok');
       renderChrome();
       if (playing()) { renderPlay(); loadMyWithdrawals(); }
+      showWithdrawOverlay(amount, method, details);
     } catch (err) { wdMsg(err.message); }
     $('wdSubmit').disabled = false;
   });

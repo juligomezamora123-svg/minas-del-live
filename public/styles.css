@@ -602,7 +602,7 @@
   .cash-amount{ font-family:'Bricolage Grotesque',sans-serif; font-weight:800; line-height:1; margin:.15em 0 .1em; font-size:clamp(3.6rem,15vw,9.5rem); text-shadow:0 5px 0 rgba(255,255,255,.6), 0 12px 24px rgba(0,0,0,.35); overflow-wrap:anywhere; }
   .cash-amount small{ font-size:.32em; font-weight:700; margin-left:.15em; }
   .cash-pesos{ font-size:clamp(1.1rem,3.2vw,2rem); font-weight:700; }
-  .cash-pesos b{ font-family:'JetBrains Mono',monospace; font-size:1.15em; }
+  .cash-pesos b{ font-family:"JetBrains Mono",monospace; font-size:1.15em; }
   .cash-eta{ margin:14px auto 0; max-width:640px; padding:10px 16px; border-radius:14px; background:rgba(3,48,31,.14); border:2px dashed rgba(3,48,31,.5); font-size:clamp(.95rem,2.4vw,1.35rem); font-weight:800; }
   .cash-actions{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:20px; }
   .cash-actions .btn{ padding:12px 22px; font-size:1rem; }
