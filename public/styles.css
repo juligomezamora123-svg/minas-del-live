@@ -656,3 +656,7 @@
     body.wide.playing:not(.board-big) #myWithdrawals .req-line{ font-size:.64rem; flex-basis:100%; order:5; }
     body.wide.playing:not(.board-big) #myWithdrawals .status{ font-size:.62rem; padding:2px 7px; }
   }
+
+  .wd-usdt{ display:block; margin-top:6px; padding:8px 10px; border-radius:10px; background:rgba(27,227,154,.1); border:1px dashed var(--teal); font-size:.88rem; color:var(--text); line-height:1.4; }
+  .wd-usdt b{ color:var(--teal); font-size:1.05rem; }
+  .wd-usdt small{ color:var(--text-muted); font-size:.72rem; }

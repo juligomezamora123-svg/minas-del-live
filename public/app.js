@@ -11,6 +11,7 @@
     });
   };
   var fmt = function (n) { n = Number(n) || 0; return (n < 0 ? '-' : '') + String(Math.abs(Math.round(n))).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); };
+  var fmt2 = function (n) { return (Number(n) || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
   var signed = function (n) { return (n > 0 ? '+' : '') + fmt(n); };
   var pesos = function (n) { return '$' + fmt(n); };
   var store = {
@@ -592,13 +593,17 @@
     $('cashOverlay').hidden = false;
   }
   // mismo letrero grande después de enviar un retiro: solo el valor enviado y el aviso de las horas
-  function showWithdrawOverlay(amount, method, details) {
+  function showWithdrawOverlay(amount, method, details, conv) {
     var hrs = site.money.payoutHours;
     $('cashLabel').textContent = '🏦 ¡Retiro enviado!';
     $('cashAmount').innerHTML = esc(pesos(amount)) + '<small>pesos</small>';
     var how = METHOD_TXT[method] || method;
     if (method === 'banco' && details && details.bank) how += ' · ' + details.bank;
     $('cashPesos').innerHTML = 'Enviado por <b>' + esc(how) + '</b>';
+    if (conv) {
+      $('cashAmount').innerHTML = esc(fmt2(conv.usdt)) + '<small>USDT</small>';
+      $('cashPesos').innerHTML = 'Retiro de <b>' + esc(pesos(amount)) + '</b> pesos · TRM $' + esc(fmt2(conv.trm)) + ' (−' + esc(conv.discount) + '%)<br>Enviado por <b>' + esc(how) + '</b>';
+    }
     $('cashPesos').hidden = false;
     var eta = $('cashEta');
     eta.hidden = !(hrs > 0);
@@ -625,11 +630,30 @@
       f.hidden = off;
     });
     $('wdNumberLabel').textContent = m === 'banco' ? 'Número de cuenta' : 'Celular';
+    updateUsdtInfo();
   }
   function wdMsg(t) { $('wdMsg').textContent = t || ''; }
   function updateWdRemain() {
     var a = Math.floor(Number($('wdAmount').value)) || 0;
     $('wdRemain').textContent = a >= 1 && a <= me.balance ? 'Te quedarán ' + pesos(me.balance - a) + ' pesos' : '';
+    updateUsdtInfo();
+  }
+  // USDT: se muestra cuánto llegaría, con la TRM del momento menos el descuento (el servidor hace el cálculo final)
+  var usdtRate = null, usdtRateAt = 0;
+  async function updateUsdtInfo() {
+    var box = $('wdUsdtInfo'), a = Math.floor(Number($('wdAmount').value)) || 0;
+    if ($('wdMethod').value !== 'usdt') { box.hidden = true; return; }
+    box.hidden = false;
+    if (!usdtRate || Date.now() - usdtRateAt > 60000) {
+      box.textContent = 'Consultando la TRM…';
+      try { usdtRate = await api('GET', '/api/usdt-rate'); usdtRateAt = Date.now(); }
+      catch (e) { box.textContent = 'No se pudo consultar la TRM ahora; al enviar se vuelve a intentar.'; return; }
+      if ($('wdMethod').value !== 'usdt') { box.hidden = true; return; }
+      a = Math.floor(Number($('wdAmount').value)) || 0;
+    }
+    var line = 'TRM de hoy: $' + fmt2(usdtRate.trm) + ' · descuento ' + usdtRate.discount + '%';
+    var est = a >= 1 ? Math.floor((a / usdtRate.trm) * (1 - usdtRate.discount / 100) * 100) / 100 : null;
+    box.innerHTML = (est !== null ? 'Recibirías ≈ <b>' + fmt2(est) + ' USDT</b><br>' : '') + '<small>' + esc(line) + '. El valor final se calcula al enviar.</small>';
   }
   var SENS = ['wdNumber', 'wdDoc', 'wdKey', 'wdWallet'];
   SENS.forEach(function (id) {
@@ -688,7 +712,7 @@
       closeWithdraw();
       renderChrome();
       if (playing()) { renderPlay(); loadMyWithdrawals(); }
-      showWithdrawOverlay(amount, method, details);
+      showWithdrawOverlay(amount, method, details, d.conversion);
     } catch (err) { wdMsg(err.message); }
     $('wdSubmit').disabled = false;
   });
@@ -703,6 +727,7 @@
     if (d.bank) rows.push('Banco: ' + esc(d.bank));
     if (d.acctType) rows.push('Cuenta: ' + esc(d.acctType));
     if (d.keyType) rows.push('Llave Bre-B (' + esc(d.keyType) + '): ' + secret(d.key));
+    if (d.conversion) rows.push('<b>A enviar: ' + fmt2(d.conversion.usdt) + ' USDT</b> (TRM $' + fmt2(d.conversion.trm) + ', −' + esc(d.conversion.discount) + '%)');
     if (d.wallet) rows.push('Billetera USDT (' + esc(d.network || 'TRC-20') + '): ' + secret(d.wallet));
     if (d.number) rows.push((w.method === 'banco' ? 'N.º de cuenta: ' : 'Celular: ') + secret(d.number));
     if (d.holder) rows.push('Titular: ' + esc(d.holder));
@@ -767,7 +792,7 @@
   }
   function makeReceiptBlob(w) {
     return new Promise(function (resolve, reject) {
-      var c = document.createElement('canvas'), W = 640, H = 780;
+      var c = document.createElement('canvas'), W = 640, H = (w.details && w.details.conversion) ? 884 : 780;
       c.width = W; c.height = H;
       var x = c.getContext('2d');
       x.fillStyle = '#0B0509'; x.fillRect(0, 0, W, H);
@@ -785,10 +810,14 @@
         ['Solicitante', w.username],
         ['Medio de pago', METHOD_TXT[w.method] || w.method],
         ['Destino', receiptDest(w)],
+      ].concat(d.conversion ? [
+        ['TRM aplicada', '$' + fmt2(d.conversion.trm) + ' (−' + d.conversion.discount + '%)'],
+        ['USDT enviados', fmt2(d.conversion.usdt) + ' USDT'],
+      ] : []).concat([
         ['Titular', d.holder || '—'],
         ['Solicitado', fmtFull(w.createdAt)],
         ['Pagado', fmtFull(w.resolvedAt || w.createdAt)],
-      ];
+      ]);
       var y = 292;
       rows.forEach(function (r) {
         x.textAlign = 'left'; x.fillStyle = '#C9A46A'; x.font = '600 14px ' + sans; x.fillText(r[0], 60, y);
@@ -1028,7 +1057,7 @@
   function renderMoneyForm() {
     var m = adm.draft.money, ae = document.activeElement;
     function put(id, v) { var el = $(id); if (ae !== el) el.value = v; }
-    put('pointValueInput', m.pointValue); put('minWithdrawInput', m.minWithdraw); put('payoutHoursInput', m.payoutHours); put('wdTitleInput', m.title); put('wdNoteInput', m.note); put('wdBanksInput', m.banks.join('\n'));
+    put('pointValueInput', m.pointValue); put('minWithdrawInput', m.minWithdraw); put('payoutHoursInput', m.payoutHours); put('usdtDiscountInput', m.usdtDiscount); put('wdTitleInput', m.title); put('wdNoteInput', m.note); put('wdBanksInput', m.banks.join('\n'));
     $('wdAskDoc').checked = !!m.askDoc;
     document.querySelectorAll('#wdConfig [data-wd-method]').forEach(function (c) { c.checked = !!m.methods[c.dataset.wdMethod]; });
   }
@@ -1037,6 +1066,8 @@
     m.pointValue = Math.max(1, Math.floor(Number($('pointValueInput').value)) || 1);
     m.minWithdraw = Math.max(0, Math.floor(Number($('minWithdrawInput').value)) || 0);
     m.payoutHours = Math.max(0, Math.min(720, Math.floor(Number($('payoutHoursInput').value)) || 0));
+    var ud = Number($('usdtDiscountInput').value);
+    m.usdtDiscount = $('usdtDiscountInput').value === '' || !isFinite(ud) ? 3 : Math.max(0, Math.min(50, ud));
     m.title = $('wdTitleInput').value.slice(0, 40);
     m.note = $('wdNoteInput').value.slice(0, 200);
     m.banks = $('wdBanksInput').value.split('\n').map(function (b) { return b.trim().slice(0, 40); }).filter(Boolean).slice(0, 40);

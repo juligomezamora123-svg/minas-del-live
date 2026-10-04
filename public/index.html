@@ -178,6 +178,7 @@
           <label class="rule-row"><span>Valor de cada punto (pesos)<small>Con 1, cada punto vale un peso</small></span><input id="pointValueInput" type="number" min="1" step="1"></label>
           <label class="rule-row"><span>Retiro mínimo (pesos)<small>0 = sin mínimo</small></span><input id="minWithdrawInput" type="number" min="0" step="1"></label>
           <label class="rule-row"><span>Horas para acreditar el pago<small>Se avisa al cobrar. 0 = no mostrar</small></span><input id="payoutHoursInput" type="number" min="0" max="720" step="1"></label>
+          <label class="rule-row"><span>Descuento al retirar en USDT (%)<small>Se resta a la conversión con la TRM del momento</small></span><input id="usdtDiscountInput" type="number" min="0" max="50" step="0.1"></label>
           <label class="rule-row"><span>Título de la ventana</span><input id="wdTitleInput" type="text" maxlength="40" style="width:170px;"></label>
           <div class="text-field-row"><label for="wdNoteInput">Mensaje en la ventana (opcional)</label><textarea id="wdNoteInput" maxlength="200" placeholder="Ej: Los pagos se hacen en 24 horas hábiles."></textarea></div>
           <div class="text-field-row"><label for="wdBanksInput">Bancos sugeridos (uno por línea)</label><textarea id="wdBanksInput" maxlength="600" placeholder="Bancolombia&#10;Davivienda&#10;Banco de Bogotá"></textarea></div>
@@ -291,6 +292,7 @@
       <label class="wd-field wd-wide">Monto (pesos)
         <span class="wd-row"><input id="wdAmount" type="number" min="1" step="1" required><button type="button" id="wdAll" class="btn">Todo</button></span>
         <span id="wdRemain" class="wd-remain"></span>
+        <span id="wdUsdtInfo" class="wd-usdt" hidden></span>
       </label>
       <label class="wd-field wd-wide" id="wdMethodWrap">Medio de pago
         <select id="wdMethod"></select>

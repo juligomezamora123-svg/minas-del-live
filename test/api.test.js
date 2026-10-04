@@ -45,6 +45,7 @@ class Client {
   del(p) { return this.call('DELETE', p, {}); }
 }
 
+process.env.TRM_OVERRIDE = '4000';
 const owner = new Client(), ana = new Client(), luis = new Client(), anon = new Client();
 const lastCode = () => /Tu código es (\d{6})/.exec(sent.at(-1) || '')?.[1];
 
@@ -253,6 +254,10 @@ test('retiros: valida datos, descuenta el saldo, permite montos parciales y cifr
   r = await ana.post('/api/withdrawals', { amount: 300, method: 'usdt', details: { wallet: 'TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE' } });
   assert.equal(r.status, 200);
   assert.equal(r.data.balance, before - 800);
+  assert.deepEqual([r.data.conversion.trm, r.data.conversion.discount, r.data.conversion.usdt], [4000, 3, 0.07], '300 pesos / 4000 menos 3 %, hacia abajo');
+  assert.equal((await ana.get('/api/usdt-rate')).data.trm, 4000);
+  assert.equal((await anon.get('/api/usdt-rate')).status, 401);
+  assert.equal((await ana.get('/api/withdrawals')).data.withdrawals.find((w) => w.method === 'usdt').details.conversion.usdt, 0.07, 'queda guardado para el dueño');
   r = await ana.post('/api/withdrawals', { amount: 200, method: 'breb', details: { keyType: 'Correo', key: 'ana@x.com', holder: 'Ana' } });
   assert.equal(r.status, 200);
   r = await ana.get('/api/withdrawals');
