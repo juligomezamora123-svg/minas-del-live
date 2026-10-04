@@ -86,7 +86,7 @@
 
   var me = null;
   var site = { texts: DEFAULT_TEXTS, money: { pointValue: 1, minWithdraw: 0, methods: { banco: true }, banks: [], askDoc: true, title: '🏦 Retirar a cuenta bancaria o cripto', note: '' }, support: { hours: '', message: '', email: '' } };
-  var unread = 0, pendingWd = 0;
+  var unread = 0, pendingWd = 0, mailEnabled = false;
   var view = store.get('minasView', 'player');
   var prevView = null;
   var game = null;          // partida actual de la página que se está viendo
@@ -261,6 +261,7 @@
     if (d.site) site = d.site;
     unread = d.unread || 0;
     pendingWd = d.pending || 0;
+    mailEnabled = !!d.mailEnabled;
   }
 
   function renderChrome() {
@@ -394,11 +395,21 @@
   var forgotStep = 1;
   function resetForgot() {
     forgotStep = 1;
+    $('fgEmailRow').hidden = !mailEnabled;
+    $('fgSubmit').hidden = !mailEnabled;
+    $('fgSupport').hidden = mailEnabled;
     $('forgotStep2').hidden = true;
     $('fgEmail').readOnly = false;
     $('fgSubmit').textContent = 'Enviarme el código';
-    $('forgotHint').textContent = 'Escribe el correo de tu cuenta y te enviamos un código de 6 dígitos.';
+    $('forgotHint').textContent = mailEnabled
+      ? 'Escribe el correo de tu cuenta y te enviamos un código de 6 dígitos.'
+      : 'Por ahora el administrador te restablece la clave. Escríbele a soporte con tu usuario y tu celular, y te da una clave temporal.';
   }
+  $('fgSupport').addEventListener('click', async function () {
+    await openSupport();
+    var t = $('supGText');
+    if (t && !t.value) t.value = 'Olvidé mi clave y necesito que me la restablezcan.';
+  });
   $('forgotForm').addEventListener('submit', async function (e) {
     e.preventDefault(); formBusy(this, true);
     try {
@@ -1071,10 +1082,25 @@
     el.innerHTML = adm.players.map(function (p) {
       return '<div class="player-admin-row"><span class="pa-info"><b>' + esc(p.username) + '</b><small>' + esc(p.email) + ' · ' + esc(p.phone ? '+' + p.phone : '') + ' · ' + p.games + ' juegos · ' + p.withdrawals + ' retiros</small></span>' +
         '<span class="mono" style="color:var(--teal);">' + pesos(p.balance) + '</span>' +
+        '<button type="button" class="btn" data-reset-player="' + p.id + '" title="Genera una clave temporal para este jugador">🔑 Nueva clave</button>' +
         '<button type="button" class="btn btn-danger" data-del-player="' + p.id + '">Eliminar</button></div>';
     }).join('');
   }
   $('playersAdminList').addEventListener('click', function (e) {
+    var rb = e.target.closest('[data-reset-player]');
+    if (rb) {
+      var rp = adm.players.filter(function (x) { return x.id === rb.dataset.resetPlayer; })[0];
+      if (!rp) return;
+      askConfirm('¿Crear una clave temporal para ' + rp.username + '? Su clave actual deja de servir y se cierran sus sesiones.', async function () {
+        try {
+          var d = await api('POST', '/api/admin/players/' + rp.id + '/reset-password');
+          $('tmpPassWho').textContent = 'Para el usuario ' + d.username;
+          $('tmpPassValue').textContent = d.password;
+          $('tmpPassModal').hidden = false;
+        } catch (err) { toast(err.message, 'err'); }
+      });
+      return;
+    }
     var b = e.target.closest('[data-del-player]');
     if (!b) return;
     var p = adm.players.filter(function (x) { return x.id === b.dataset.delPlayer; })[0];
@@ -1082,6 +1108,12 @@
     askConfirm('¿Eliminar la cuenta de ' + p.username + '? Se pierde su saldo (' + pesos(p.balance) + ') y sus juegos.', async function () {
       try { await api('DELETE', '/api/admin/players/' + p.id); loadPlayers(); } catch (err) { toast(err.message, 'err'); }
     });
+  });
+
+  $('tmpPassClose').addEventListener('click', function () { $('tmpPassModal').hidden = true; $('tmpPassValue').textContent = ''; });
+  $('tmpPassCopy').addEventListener('click', function () {
+    var v = $('tmpPassValue').textContent;
+    if (navigator.clipboard) navigator.clipboard.writeText(v).then(function () { toast('Clave copiada.'); }, function () { toast('No se pudo copiar: selecciónala y cópiala.', 'err'); });
   });
 
   // retiros: lista del dueño

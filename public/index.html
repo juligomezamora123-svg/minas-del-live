@@ -61,13 +61,14 @@
 
       <form id="forgotForm" class="auth-form" data-auth-form="forgot" autocomplete="off" hidden>
         <p id="forgotHint" class="hint" style="margin:0;">Escribe el correo de tu cuenta y te enviamos un código de 6 dígitos.</p>
-        <label>Correo<input id="fgEmail" type="email" maxlength="80" autocomplete="email" required></label>
+        <label id="fgEmailRow">Correo<input id="fgEmail" type="email" maxlength="80" autocomplete="email" required></label>
         <div id="forgotStep2" hidden class="auth-form">
           <label>Código que llegó a tu correo<input id="fgCode" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code"></label>
           <label>Clave nueva (mínimo 8 caracteres)<span class="eye-wrap"><input id="fgPass" type="password" maxlength="100" autocomplete="new-password"><button type="button" class="eye-btn" data-eye-for="fgPass" aria-label="Mostrar u ocultar">👁</button></span></label>
           <label>Repetir clave nueva<input id="fgPass2" type="password" maxlength="100" autocomplete="new-password"></label>
         </div>
         <button id="fgSubmit" type="submit" class="btn btn-primary">Enviarme el código</button>
+        <button id="fgSupport" type="button" class="btn btn-primary" hidden>🆘 Pedir que me restablezcan la clave</button>
         <button type="button" class="link-btn" data-auth="login">← Volver a ingresar</button>
       </form>
 
@@ -316,6 +317,16 @@
       <button type="submit" id="wdSubmit" class="btn btn-primary">Solicitar retiro</button>
     </div>
   </form>
+</div>
+
+<div id="tmpPassModal" class="confirm-overlay" hidden>
+  <div class="confirm-box" style="max-width:380px;text-align:center;">
+    <h3 class="display" style="margin:0 0 6px;">🔑 Clave temporal</h3>
+    <p id="tmpPassWho" class="hint" style="margin:0 0 10px;"></p>
+    <div id="tmpPassValue" class="code-value"></div>
+    <p class="hint" style="margin:10px 0 0;">Envíasela al jugador por WhatsApp o donde lo contactes. Con esta clave entra y la cambia en <b>Mi cuenta</b>. Esta clave solo se muestra ahora.</p>
+    <div class="confirm-actions" style="margin-top:12px;justify-content:center;"><button type="button" id="tmpPassCopy" class="btn btn-primary">📋 Copiar</button><button type="button" id="tmpPassClose" class="btn">Cerrar</button></div>
+  </div>
 </div>
 
 <div id="supportModal" class="confirm-overlay" hidden>

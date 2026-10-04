@@ -346,6 +346,20 @@ test('administrador: lista y elimina jugadores (no con retiros pendientes)', asy
   assert.equal((await owner.get('/api/admin/players')).data.players.length, 1);
 });
 
+test('el dueño restablece la clave de un jugador con una clave temporal', async () => {
+  const list = (await owner.get('/api/admin/players')).data.players;
+  const ana_ = list.find((p) => p.username === 'ana_1');
+  assert.equal((await ana.post('/api/admin/players/' + ana_.id + '/reset-password', {})).status, 403, 'un jugador no puede');
+  assert.equal((await owner.post('/api/admin/players/nadie/reset-password', {})).status, 404);
+  const r = await owner.post('/api/admin/players/' + ana_.id + '/reset-password', {});
+  assert.equal(r.status, 200);
+  assert.match(r.data.password, /^[A-Za-z0-9]{10}$/);
+  assert.equal((await ana.get('/api/me')).data.user, null, 'su sesión anterior se cerró');
+  assert.equal((await ana.post('/api/auth/login', { id: 'ana_1', password: 'nuevaClave99' })).status, 401);
+  assert.equal((await ana.post('/api/auth/login', { id: 'ana_1', password: r.data.password })).status, 200);
+  assert.equal((await anon.get('/api/me')).data.mailEnabled, false);
+});
+
 test('el dueño juega en la página Jugar y cobra a su saldo', async () => {
   await owner.put('/api/admin/config/live', { config: { totalCells: 10, tiers: [{ key: 'a', emoji: '⭐', label: 'A', count: 10, points: 500, wipeout: false }], settings: {} } });
   let r = await owner.get('/api/game?page=live');
